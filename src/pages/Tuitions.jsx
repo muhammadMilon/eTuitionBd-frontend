@@ -129,7 +129,11 @@ const Tuitions = () => {
 
         {filteredTuitions.length === 0 && (
           <div className="text-center py-12">
-            <BookOpen className="mx-auto mb-4 text-base-content/30" size={64} />
+            <img 
+              src="/App-Error.png" 
+              alt="No tuitions found" 
+              className="w-full max-w-md mx-auto mb-6"
+            />
             <p className="text-lg text-base-content/70">No tuitions found matching your search.</p>
           </div>
         )}

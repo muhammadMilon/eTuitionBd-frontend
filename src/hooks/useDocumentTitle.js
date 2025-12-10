@@ -40,7 +40,7 @@ const useDocumentTitle = () => {
     };
 
     const pageTitle = getPageTitle();
-    document.title = pageTitle === 'Home' || pageTitle === 'eTuitionBd' 
+    document.title = pageTitle === 'eTuitionBd' 
       ? 'eTuitionBd - Tuition Management System' 
       : `${pageTitle} - eTuitionBd`;
   }, [location.pathname]);
