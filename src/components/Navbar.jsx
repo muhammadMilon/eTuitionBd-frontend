@@ -107,13 +107,19 @@ const Navbar = () => {
                 className="btn btn-ghost btn-circle avatar"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                  {currentUser.displayName ? (
-                    currentUser.displayName.charAt(0).toUpperCase()
-                  ) : (
-                    currentUser.email?.charAt(0).toUpperCase()
-                  )}
-                </div>
+                {currentUser.photoURL ? (
+                  <div className="w-10 rounded-full">
+                    <img src={currentUser.photoURL} alt={currentUser.displayName || 'User'} className="w-full h-full rounded-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+                    {currentUser.displayName ? (
+                      currentUser.displayName.charAt(0).toUpperCase()
+                    ) : (
+                      currentUser.email?.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                )}
               </label>
               {dropdownOpen && (
                 <ul

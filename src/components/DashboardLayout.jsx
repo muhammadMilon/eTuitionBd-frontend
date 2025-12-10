@@ -104,11 +104,17 @@ const DashboardLayout = () => {
 
           <div className="border-t border-base-300 pt-4">
             <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-base-300">
-              <div className="w-10 h-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                {currentUser?.displayName
-                  ? currentUser.displayName.charAt(0).toUpperCase()
-                  : currentUser?.email?.charAt(0).toUpperCase()}
-              </div>
+              {currentUser?.photoURL ? (
+                <div className="w-10 h-10 rounded-full">
+                  <img src={currentUser.photoURL} alt={currentUser.displayName || 'User'} className="w-full h-full rounded-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+                  {currentUser?.displayName
+                    ? currentUser.displayName.charAt(0).toUpperCase()
+                    : currentUser?.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">
                   {currentUser?.displayName || 'User'}
