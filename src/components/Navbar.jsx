@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X, User, LogOut, Home, BookOpen, Users, Info, Mail, LayoutDashboard } from 'lucide-react';
 
@@ -8,6 +8,44 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get page title based on current route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    const routeTitles = {
+      '/': 'Home',
+      '/tuitions': 'Tuitions',
+      '/tutors': 'Tutors',
+      '/about': 'About',
+      '/contact': 'Contact',
+      '/login': 'Login',
+      '/register': 'Register',
+      '/dashboard': 'Dashboard',
+    };
+
+    // Check for dynamic routes
+    if (path.startsWith('/tuitions/')) return 'Tuition Details';
+    if (path.startsWith('/tutors/')) return 'Tutor Profile';
+    if (path.startsWith('/dashboard/')) {
+      const dashboardRoutes = {
+        '/dashboard/tuitions': 'My Tuitions',
+        '/dashboard/tutors': 'Tutors',
+        '/dashboard/payments': 'Payment History',
+        '/dashboard/profile': 'Profile Settings',
+        '/dashboard/users': 'Manage Users',
+        '/dashboard/settings': 'Settings',
+        '/dashboard/students': 'My Students',
+        '/dashboard/earnings': 'Earnings',
+        '/dashboard/applications': 'Applications',
+      };
+      return dashboardRoutes[path] || 'Dashboard';
+    }
+
+    return routeTitles[path] || 'eTuitionBd';
+  };
+
+  const pageTitle = getPageTitle();
 
   const handleLogout = async () => {
     try {
@@ -30,11 +68,17 @@ const Navbar = () => {
   return (
     <nav className="navbar bg-base-200 shadow-lg sticky top-0 z-50 border-b border-base-300">
       <div className="container mx-auto px-4">
-        <div className="flex-1">
+        <div className="flex-1 flex items-center gap-3">
           <Link to="/" className="btn btn-ghost normal-case text-xl font-bold text-primary">
             <img src="/logo.jpg" alt="eTuitionBd Logo" className="h-12 w-12 rounded-full object-cover mr-2" />
             eTuitionBd
           </Link>
+          {pageTitle !== 'Home' && pageTitle !== 'eTuitionBd' && (
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-base-content/50">/</span>
+              <span className="text-lg font-semibold text-base-content">{pageTitle}</span>
+            </div>
+          )}
         </div>
 
         {/* Desktop Navigation */}

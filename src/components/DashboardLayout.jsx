@@ -2,11 +2,13 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu, Shield, GraduationCap, Settings, DollarSign } from 'lucide-react';
 import { useState } from 'react';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const DashboardLayout = () => {
   const { currentUser, logout, userRole } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useDocumentTitle();
 
   const handleLogout = async () => {
     try {
