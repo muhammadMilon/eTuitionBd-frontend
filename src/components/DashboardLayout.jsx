@@ -1,10 +1,10 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu, Shield, GraduationCap, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, userRole } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -17,12 +17,42 @@ const DashboardLayout = () => {
     }
   };
 
-  const dashboardLinks = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/dashboard/tuitions', label: 'My Tuitions', icon: BookOpen },
-    { path: '/dashboard/tutors', label: 'Tutors', icon: Users },
-    { path: '/dashboard/profile', label: 'Profile', icon: User },
-  ];
+  // Role-based navigation links
+  const getDashboardLinks = () => {
+    const baseLinks = [
+      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ];
+
+    if (userRole === 'admin') {
+      return [
+        ...baseLinks,
+        { path: '/dashboard/users', label: 'Manage Users', icon: Users },
+        { path: '/dashboard/tuitions', label: 'Review Tuitions', icon: BookOpen },
+        { path: '/dashboard/tutors', label: 'Verify Tutors', icon: Shield },
+        { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        { path: '/dashboard/profile', label: 'Profile', icon: User },
+      ];
+    } else if (userRole === 'tutor') {
+      return [
+        ...baseLinks,
+        { path: '/dashboard/tuitions', label: 'Browse Tuitions', icon: BookOpen },
+        { path: '/dashboard/students', label: 'My Students', icon: Users },
+        { path: '/dashboard/earnings', label: 'Earnings', icon: GraduationCap },
+        { path: '/dashboard/profile', label: 'Profile', icon: User },
+      ];
+    } else {
+      // Student
+      return [
+        ...baseLinks,
+        { path: '/dashboard/tuitions', label: 'My Tuitions', icon: BookOpen },
+        { path: '/dashboard/tutors', label: 'Find Tutors', icon: Users },
+        { path: '/dashboard/applications', label: 'Applications', icon: BookOpen },
+        { path: '/dashboard/profile', label: 'Profile', icon: User },
+      ];
+    }
+  };
+
+  const dashboardLinks = getDashboardLinks();
 
   return (
     <div className="min-h-screen bg-base-100 flex">
@@ -43,6 +73,11 @@ const DashboardLayout = () => {
         <div className="h-full flex flex-col p-4">
           <div className="mb-8 mt-12 lg:mt-4">
             <h2 className="text-2xl font-bold text-primary">Dashboard</h2>
+            {userRole && (
+              <span className="badge badge-sm badge-primary mt-2 capitalize">
+                {userRole}
+              </span>
+            )}
           </div>
 
           <nav className="flex-1">

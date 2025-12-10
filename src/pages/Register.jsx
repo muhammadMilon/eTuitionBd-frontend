@@ -10,6 +10,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'student', // Default role
   });
   const [loading, setLoading] = useState(false);
   const { signup, googleSignIn } = useAuth();
@@ -38,7 +39,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await signup(formData.email, formData.password, formData.name);
+      await signup(formData.email, formData.password, formData.name, formData.role);
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -51,7 +52,7 @@ const Register = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await googleSignIn();
+      await googleSignIn(formData.role);
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -138,6 +139,28 @@ const Register = () => {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Register As</span>
+              </label>
+              <select
+                name="role"
+                className="select select-bordered w-full bg-base-100"
+                value={formData.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="student">Student</option>
+                <option value="tutor">Tutor</option>
+                <option value="admin">Admin</option>
+              </select>
+              <label className="label">
+                <span className="label-text-alt text-base-content/50">
+                  Choose your role. (Admin access requires verification)
+                </span>
+              </label>
             </div>
 
             <button
