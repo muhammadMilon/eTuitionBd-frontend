@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import Tuitions from './pages/Tuitions';
 import TuitionDetails from './pages/TuitionDetails';
 import Tutors from './pages/Tutors';
+import TutorProfile from './pages/TutorProfile';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -52,6 +53,7 @@ function App() {
             <Route path="tuitions" element={<Tuitions />} />
             <Route path="tuitions/:id" element={<TuitionDetails />} />
             <Route path="tutors" element={<Tutors />} />
+            <Route path="tutors/:id" element={<TutorProfile />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
             <Route path="login" element={<Login />} />

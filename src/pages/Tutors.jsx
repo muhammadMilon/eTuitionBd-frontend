@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Users, Star, GraduationCap, MapPin, Search } from 'lucide-react';
 
 const Tutors = () => {
@@ -119,7 +120,12 @@ const Tutors = () => {
                 </div>
 
                 <div className="card-actions mt-4">
-                  <button className="btn btn-primary btn-sm w-full">View Profile</button>
+                  <Link
+                    to={`/tutors/${tutor.id}`}
+                    className="btn btn-primary btn-sm w-full"
+                  >
+                    View Profile
+                  </Link>
                 </div>
               </div>
             </div>
