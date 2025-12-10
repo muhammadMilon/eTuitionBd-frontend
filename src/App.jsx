@@ -18,6 +18,7 @@ import Register from './pages/Register';
 
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
+import PaymentHistory from './pages/PaymentHistory';
 
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="tuitions" element={<div className="card bg-base-200"><div className="card-body"><h2 className="card-title">My Tuitions</h2><p>Tuition management page coming soon...</p></div></div>} />}
             <Route path="tutors" element={<div className="card bg-base-200"><div className="card-body"><h2 className="card-title">Tutors</h2><p>Tutors management page coming soon...</p></div></div>} />}
+            <Route path="payments" element={<PaymentHistory />} />
             <Route path="profile" element={<div className="card bg-base-200"><div className="card-body"><h2 className="card-title">Profile</h2><p>Profile page coming soon...</p></div></div>} />}
           </Route>
 

@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu, Shield, GraduationCap, Settings } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu, Shield, GraduationCap, Settings, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
@@ -29,6 +29,7 @@ const DashboardLayout = () => {
         { path: '/dashboard/users', label: 'Manage Users', icon: Users },
         { path: '/dashboard/tuitions', label: 'Review Tuitions', icon: BookOpen },
         { path: '/dashboard/tutors', label: 'Verify Tutors', icon: Shield },
+        { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
         { path: '/dashboard/settings', label: 'Settings', icon: Settings },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
@@ -38,6 +39,7 @@ const DashboardLayout = () => {
         { path: '/dashboard/tuitions', label: 'Browse Tuitions', icon: BookOpen },
         { path: '/dashboard/students', label: 'My Students', icon: Users },
         { path: '/dashboard/earnings', label: 'Earnings', icon: GraduationCap },
+        { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     } else {
@@ -47,6 +49,7 @@ const DashboardLayout = () => {
         { path: '/dashboard/tuitions', label: 'My Tuitions', icon: BookOpen },
         { path: '/dashboard/tutors', label: 'Find Tutors', icon: Users },
         { path: '/dashboard/applications', label: 'Applications', icon: BookOpen },
+        { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     }
