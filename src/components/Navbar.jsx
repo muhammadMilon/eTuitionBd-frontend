@@ -132,7 +132,7 @@ const Navbar = () => {
                   </li>
                   <li>
                     <Link
-                      to="/profile"
+                      to="/dashboard/profile"
                       className="flex items-center gap-2"
                       onClick={() => setDropdownOpen(false)}
                     >
@@ -205,7 +205,7 @@ const Navbar = () => {
                 </li>
                 <li>
                   <Link
-                    to="/profile"
+                    to="/dashboard/profile"
                     className="flex items-center gap-2"
                     onClick={() => setIsOpen(false)}
                   >
