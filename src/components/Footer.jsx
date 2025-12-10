@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -9,7 +9,7 @@ const Footer = () => {
           {/* About Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="text-primary" size={24} />
+              <img src="/logo.jpg" alt="eTuitionBd Logo" className="h-12 w-12 rounded-full object-cover" />
               <h3 className="text-xl font-bold text-primary">eTuitionBd</h3>
             </div>
             <p className="text-base-content/70 text-sm leading-relaxed">

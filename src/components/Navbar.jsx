@@ -32,7 +32,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex-1">
           <Link to="/" className="btn btn-ghost normal-case text-xl font-bold text-primary">
-            <BookOpen className="mr-2" />
+            <img src="/logo.jpg" alt="eTuitionBd Logo" className="h-12 w-12 rounded-full object-cover mr-2" />
             eTuitionBd
           </Link>
         </div>
