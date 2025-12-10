@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BookOpen, MapPin, DollarSign, Clock, Search, Filter } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, MapPin, DollarSign, Clock, Search, Filter, Eye } from 'lucide-react';
 
 const Tuitions = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,7 +106,21 @@ const Tuitions = () => {
                 </div>
                 <div className="card-actions justify-between items-center mt-4">
                   <span className="text-xs text-base-content/50">{tuition.postedDate}</span>
-                  <button className="btn btn-primary btn-sm">Apply Now</button>
+                  <div className="flex gap-2">
+                    <Link
+                      to={`/tuitions/${tuition.id}`}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <Eye size={16} />
+                      View Details
+                    </Link>
+                    <Link
+                      to={`/tuitions/${tuition.id}`}
+                      className="btn btn-primary btn-sm"
+                    >
+                      Apply Now
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ import DashboardLayout from './components/DashboardLayout';
 // Public Pages
 import Home from './pages/Home';
 import Tuitions from './pages/Tuitions';
+import TuitionDetails from './pages/TuitionDetails';
 import Tutors from './pages/Tutors';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="tuitions" element={<Tuitions />} />
+            <Route path="tuitions/:id" element={<TuitionDetails />} />
             <Route path="tutors" element={<Tutors />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
