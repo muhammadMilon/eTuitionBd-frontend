@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -33,9 +32,9 @@ class ErrorBoundary extends React.Component {
                 We encountered an unexpected error. Please try again or go back to the home page.
               </p>
               <div className="card-actions justify-center">
-                <Link to="/" className="btn btn-primary">
+                <a href="/" className="btn btn-primary">
                   Go to Home
-                </Link>
+                </a>
                 <button 
                   onClick={() => window.location.reload()} 
                   className="btn btn-outline"

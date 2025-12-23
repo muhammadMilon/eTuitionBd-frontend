@@ -1,51 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Star, GraduationCap, MapPin, Search } from 'lucide-react';
+import api from '../api/axiosInstance';
+import toast from 'react-hot-toast';
 
 const Tutors = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [tutors, setTutors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual API call
-  const tutors = [
-    {
-      id: 1,
-      name: 'Dr. Ahmed Hasan',
-      subject: 'Mathematics',
-      experience: '10 years',
-      education: 'PhD in Mathematics',
-      location: 'Dhanmondi, Dhaka',
-      rating: 4.8,
-      students: 150,
-      verified: true,
-    },
-    {
-      id: 2,
-      name: 'Fatima Rahman',
-      subject: 'Physics',
-      experience: '7 years',
-      education: 'MSc in Physics',
-      location: 'Gulshan, Dhaka',
-      rating: 4.9,
-      students: 120,
-      verified: true,
-    },
-    {
-      id: 3,
-      name: 'Karim Uddin',
-      subject: 'English',
-      experience: '5 years',
-      education: 'MA in English Literature',
-      location: 'Uttara, Dhaka',
-      rating: 4.7,
-      students: 95,
-      verified: true,
-    },
-  ];
+  useEffect(() => {
+    fetchTutors();
+  }, []);
+
+  const fetchTutors = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get('/api/users/tutors');
+      setTutors(data.tutors || []);
+    } catch (error) {
+      console.error('Error fetching tutors:', error);
+      toast.error('Failed to load tutors');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTutors = tutors.filter((tutor) =>
-    tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tutor.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tutor.location.toLowerCase().includes(searchTerm.toLowerCase())
+    !searchTerm ||
+    tutor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tutor.qualifications?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tutor.experience?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -75,68 +60,74 @@ const Tutors = () => {
           </div>
         </div>
 
-        {/* Tutors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTutors.map((tutor) => (
-            <div key={tutor.id} className="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-              <div className="card-body">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold">
-                      {tutor.name.charAt(0)}
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        ) : (
+          <>
+            {/* Tutors Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTutors.map((tutor) => (
+                <div key={tutor._id} className="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
+                  <div className="card-body">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold overflow-hidden">
+                          {tutor.photoUrl ? (
+                            <img src={tutor.photoUrl} alt={tutor.name} className="w-full h-full object-cover" />
+                          ) : (
+                            tutor.name?.charAt(0)?.toUpperCase() || 'T'
+                          )}
+                        </div>
+                        <div>
+                          <h2 className="card-title text-lg">{tutor.name || 'Tutor'}</h2>
+                          {tutor.isVerified && (
+                            <span className="badge badge-success badge-sm">Verified</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="card-title text-lg">{tutor.name}</h2>
-                      {tutor.verified && (
-                        <span className="badge badge-success badge-sm">Verified</span>
+
+                    <div className="space-y-2">
+                      {tutor.qualifications && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <GraduationCap size={16} className="text-base-content/50" />
+                          <span>{tutor.qualifications}</span>
+                        </div>
+                      )}
+                      {tutor.experience && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-semibold">Experience:</span>
+                          <span>{tutor.experience}</span>
+                        </div>
+                      )}
+                      {tutor.bio && (
+                        <p className="text-sm text-base-content/70 line-clamp-2">{tutor.bio}</p>
                       )}
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <GraduationCap size={16} className="text-base-content/50" />
-                    <span className="font-semibold">Subject:</span>
-                    <span>{tutor.subject}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <GraduationCap size={16} className="text-base-content/50" />
-                    <span>{tutor.education}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin size={16} className="text-base-content/50" />
-                    <span>{tutor.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold">Experience:</span>
-                    <span>{tutor.experience}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Star className="text-warning" size={16} />
-                    <span className="font-semibold">{tutor.rating}</span>
-                    <span className="text-base-content/50">({tutor.students} students)</span>
+                    <div className="card-actions mt-4">
+                      <Link
+                        to={`/tutors/${tutor._id}`}
+                        className="btn btn-primary btn-sm w-full"
+                      >
+                        View Profile
+                      </Link>
+                    </div>
                   </div>
                 </div>
-
-                <div className="card-actions mt-4">
-                  <Link
-                    to={`/tutors/${tutor.id}`}
-                    className="btn btn-primary btn-sm w-full"
-                  >
-                    View Profile
-                  </Link>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {filteredTutors.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="mx-auto mb-4 text-base-content/30" size={64} />
-            <p className="text-lg text-base-content/70">No tutors found matching your search.</p>
-          </div>
+            {filteredTutors.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="mx-auto mb-4 text-base-content/30" size={64} />
+                <p className="text-lg text-base-content/70">No tutors found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

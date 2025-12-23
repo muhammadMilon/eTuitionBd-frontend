@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -136,10 +136,8 @@ const Footer = () => {
         </div>
 
         {/* Copyright Section */}
-        <div className="border-t border-base-300 mt-8 pt-8 text-center">
-          <p className="text-base-content/70 text-sm">
-            © {new Date().getFullYear()} eTuitionBd. All rights reserved.
-          </p>
+        <div className="border-t border-base-300 mt-8 pt-8 text-center text-sm opacity-70">
+          <p>© {new Date().getFullYear()} eTuitionBd. Built with passion for education. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,86 +1,156 @@
-import { Shield, Users, BookOpen, DollarSign, AlertCircle, CheckCircle, XCircle, TrendingUp, Activity } from 'lucide-react';
+import { AlertCircle, BookOpen, DollarSign, PieChart as PieChartIcon, Shield, TrendingUp, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell, Legend,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis, YAxis
+} from 'recharts';
+import api from '../../api/axiosInstance';
 
 const AdminDashboard = () => {
-  // Mock data - replace with actual API calls
-  const stats = [
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalStudents: 0,
+    totalTutors: 0,
+    pendingTuitions: 0,
+    activeTuitions: 0,
+    totalRevenue: 0,
+  });
+  const [pendingTuitions, setPendingTuitions] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [userDistribution, setUserDistribution] = useState([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, tuitionsRes, analyticsRes] = await Promise.all([
+        api.get('/api/admin/stats'),
+        api.get('/api/admin/tuitions?status=pending&limit=5'),
+        api.get('/api/admin/analytics/revenue')
+      ]);
+
+      setStats({
+        totalUsers: statsRes.data.totalUsers || 0,
+        totalStudents: statsRes.data.totalStudents || 0,
+        totalTutors: statsRes.data.totalTutors || 0,
+        pendingTuitions: statsRes.data.pendingTuitions || 0,
+        activeTuitions: statsRes.data.activeTuitions || 0,
+        totalRevenue: statsRes.data.totalRevenue || 0,
+      });
+
+      setPendingTuitions(tuitionsRes.data.tuitions || []);
+      
+      // Format revenue data for charts
+      const rawMonthly = analyticsRes.data.monthlyRevenue || [];
+      const formattedRevenue = rawMonthly.reverse().map(item => ({
+        name: `${item._id.month}/${item._id.year}`,
+        revenue: item.revenue
+      }));
+      setRevenueData(formattedRevenue);
+
+      // User distribution for Pie Chart
+      setUserDistribution([
+        { name: 'Students', value: statsRes.data.totalStudents || 0 },
+        { name: 'Tutors', value: statsRes.data.totalTutors || 0 }
+      ]);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const COLORS = ['#6366f1', '#10b981']; // Primary and Success colors
+
+  const statsData = [
     {
       title: 'Total Users',
-      value: '1,234',
+      value: stats.totalUsers.toLocaleString(),
       icon: Users,
       color: 'text-primary',
       bgColor: 'bg-primary/20',
-      change: '+12%',
     },
     {
       title: 'Pending Approvals',
-      value: '45',
+      value: stats.pendingTuitions.toString(),
       icon: AlertCircle,
       color: 'text-warning',
       bgColor: 'bg-warning/20',
-      change: '+5',
     },
     {
       title: 'Active Tuitions',
-      value: '892',
+      value: stats.activeTuitions.toString(),
       icon: BookOpen,
       color: 'text-success',
       bgColor: 'bg-success/20',
-      change: '+23',
     },
     {
       title: 'Total Revenue',
-      value: '৳2,45,000',
+      value: `৳${stats.totalRevenue.toLocaleString()}`,
       icon: DollarSign,
       color: 'text-info',
       bgColor: 'bg-info/20',
-      change: '+18%',
     },
   ];
 
-  const pendingActions = [
-    { id: 1, type: 'Tutor Verification', name: 'Dr. Ahmed Hasan', subject: 'Mathematics', time: '2 hours ago' },
-    { id: 2, type: 'Tuition Post', name: 'Class 9-10 Math', student: 'Student ABC', time: '3 hours ago' },
-    { id: 3, type: 'Tutor Verification', name: 'Fatima Rahman', subject: 'Physics', time: '5 hours ago' },
-    { id: 4, type: 'Dispute', name: 'Payment Issue', parties: 'Tutor XYZ & Student DEF', time: '1 day ago' },
-  ];
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const posted = new Date(date);
+    const diffInSeconds = Math.floor((now - posted) / 1000);
+    
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
 
-  const recentActivities = [
-    { id: 1, activity: 'Tutor verified: Dr. Ahmed Hasan', status: 'approved', time: '1 hour ago' },
-    { id: 2, activity: 'Tuition post approved: Class 9-10 Math', status: 'approved', time: '2 hours ago' },
-    { id: 3, activity: 'New user registered: Student ABC', status: 'info', time: '3 hours ago' },
-    { id: 4, activity: 'Dispute resolved: Payment Issue', status: 'resolved', time: '5 hours ago' },
-    { id: 5, activity: 'Tutor rejected: Invalid credentials', status: 'rejected', time: '1 day ago' },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-4 md:p-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
             <Shield className="text-primary" size={40} />
-            Admin Dashboard
+            Admin Overview
           </h1>
-          <p className="text-base-content/70">Manage and monitor the platform</p>
+          <p className="text-base-content/70">Performance and platform statistics</p>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="card bg-base-200 shadow-xl">
-            <div className="card-body">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsData.map((stat, index) => (
+          <div key={index} className="card bg-base-200 shadow-xl border border-base-300">
+            <div className="card-body p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-base-content/70 text-sm mb-1">{stat.title}</p>
+                  <p className="text-base-content/70 text-sm font-medium mb-1">{stat.title}</p>
                   <p className="text-3xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-success mt-1 flex items-center gap-1">
-                    <TrendingUp size={12} />
-                    {stat.change}
-                  </p>
                 </div>
-                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={stat.color} size={28} />
+                <div className={`p-4 rounded-2xl ${stat.bgColor} flex items-center justify-center`}>
+                  <stat.icon className={stat.color} size={32} />
                 </div>
               </div>
             </div>
@@ -88,98 +158,121 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Pending Actions & Recent Activities */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Actions */}
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4 flex items-center gap-2">
-              <AlertCircle className="text-warning" size={20} />
-              Pending Actions
-            </h2>
-            <div className="space-y-4">
-              {pendingActions.map((action) => (
-                <div key={action.id} className="flex items-start gap-3 pb-4 border-b border-base-300 last:border-0">
-                  <div className="w-2 h-2 rounded-full bg-warning mt-2"></div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{action.type}</p>
-                    <p className="text-sm text-base-content/70">{action.name}</p>
-                    {action.subject && (
-                      <p className="text-xs text-base-content/50 mt-1">Subject: {action.subject}</p>
-                    )}
-                    {action.student && (
-                      <p className="text-xs text-base-content/50 mt-1">Student: {action.student}</p>
-                    )}
-                    {action.parties && (
-                      <p className="text-xs text-base-content/50 mt-1">Parties: {action.parties}</p>
-                    )}
-                    <p className="text-xs text-base-content/50 mt-1">{action.time}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="btn btn-success btn-xs">
-                      <CheckCircle size={14} />
-                    </button>
-                    <button className="btn btn-error btn-xs">
-                      <XCircle size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="card-actions mt-4">
-              <button className="btn btn-primary btn-sm w-full">View All</button>
-            </div>
+        {/* Revenue Bar Chart */}
+        <div className="card bg-base-200 shadow-xl p-6">
+          <h2 className="card-title mb-6 flex items-center gap-2 text-primary">
+            <TrendingUp size={20} />
+            Revenue Growth
+          </h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                />
+                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Recent Activities */}
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4 flex items-center gap-2">
-              <Activity className="text-primary" size={20} />
-              Recent Activities
-            </h2>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-base-300 last:border-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.status === 'approved' || activity.status === 'resolved' 
-                      ? 'bg-success' 
-                      : activity.status === 'rejected' 
-                      ? 'bg-error' 
-                      : 'bg-info'
-                  }`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm">{activity.activity}</p>
-                    <p className="text-xs text-base-content/50 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="card-actions mt-4">
-              <button className="btn btn-primary btn-sm w-full">View All Activities</button>
-            </div>
+        {/* User Distribution Pie Chart */}
+        <div className="card bg-base-200 shadow-xl p-6">
+          <h2 className="card-title mb-6 flex items-center gap-2 text-primary">
+            <PieChartIcon size={20} />
+            User Distribution
+          </h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={userDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {userDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="btn btn-primary btn-outline justify-start">
-              <Users size={20} />
-              Manage Users
-            </button>
-            <button className="btn btn-primary btn-outline justify-start">
-              <BookOpen size={20} />
-              Review Posts
-            </button>
-            <button className="btn btn-primary btn-outline justify-start">
-              <AlertCircle size={20} />
-              Handle Disputes
-            </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pending Tuitions */}
+        <div className="card bg-base-200 shadow-xl">
+          <div className="card-body">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="card-title flex items-center gap-2">
+                <AlertCircle className="text-warning" size={24} />
+                Pending Approvals
+              </h2>
+              <Link to="/dashboard/tuition-management" className="btn btn-primary btn-sm rounded-full">
+                Review All
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {pendingTuitions.length === 0 ? (
+                <div className="text-center py-10 opacity-50 italic">All caught up! No pending tuitions.</div>
+              ) : (
+                pendingTuitions.map((tuition) => (
+                  <div key={tuition._id} className="flex items-center gap-4 p-4 bg-base-100 rounded-xl hover:bg-base-300 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center text-warning">
+                      <BookOpen size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">
+                        {tuition.title || `${tuition.subject} - Class ${tuition.class}`}
+                      </p>
+                      <p className="text-xs text-base-content/60">
+                         {tuition.studentId?.name || 'Anonymous Student'}
+                      </p>
+                    </div>
+                    <span className="text-xs opacity-50 whitespace-nowrap">
+                      {tuition.createdAt ? getTimeAgo(tuition.createdAt) : 'New'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Management Links */}
+        <div className="card bg-base-200 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title mb-6">Platform Management</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link to="/dashboard/users" className="btn btn-outline btn-lg flex-col h-auto py-6 gap-2 hover:bg-primary/10">
+                <Users size={32} className="text-primary" />
+                <span className="text-sm">Manage Users</span>
+              </Link>
+              <Link to="/dashboard/tuition-management" className="btn btn-outline btn-lg flex-col h-auto py-6 gap-2 hover:bg-success/10">
+                <BookOpen size={32} className="text-success" />
+                <span className="text-sm">Review Tuitions</span>
+              </Link>
+              <Link to="/dashboard/payments" className="btn btn-outline btn-lg flex-col h-auto py-6 gap-2 hover:bg-info/10">
+                <DollarSign size={32} className="text-info" />
+                <span className="text-sm">Financial Reports</span>
+              </Link>
+              <div className="btn btn-outline btn-lg flex-col h-auto py-6 gap-2 opacity-50 cursor-not-allowed">
+                <Shield size={32} className="text-warning" />
+                <span className="text-sm">System Logs</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -188,4 +281,5 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
 

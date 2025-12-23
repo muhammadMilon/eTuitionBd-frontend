@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X, User, LogOut, Home, BookOpen, Users, Info, Mail, LayoutDashboard } from 'lucide-react';
@@ -6,8 +6,29 @@ import { Menu, X, User, LogOut, Home, BookOpen, Users, Info, Mail, LayoutDashboa
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+  
+  // Check if user is authenticated (either Firebase user or has token)
+  const isAuthenticated = currentUser || (typeof window !== 'undefined' && localStorage.getItem('etuitionbd_token'));
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     try {
@@ -56,23 +77,23 @@ const Navbar = () => {
 
         {/* Auth Navigation - Desktop */}
         <div className="flex-none hidden lg:flex items-center gap-2 ml-4">
-          {currentUser ? (
-            <div className="dropdown dropdown-end">
+          {loading ? null : isAuthenticated ? (
+            <div className="dropdown dropdown-end" ref={dropdownRef}>
               <label
                 tabIndex={0}
                 className="btn btn-ghost btn-circle avatar"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                {currentUser.photoURL ? (
+                {currentUser?.photoURL || currentUser?.photoUrl ? (
                   <div className="w-10 rounded-full">
-                    <img src={currentUser.photoURL} alt={currentUser.displayName || 'User'} className="w-full h-full rounded-full object-cover" />
+                    <img src={currentUser.photoURL || currentUser.photoUrl} alt={currentUser.displayName || currentUser.name || 'User'} className="w-full h-full rounded-full object-cover" />
                   </div>
                 ) : (
                   <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                    {currentUser.displayName ? (
-                      currentUser.displayName.charAt(0).toUpperCase()
+                    {(currentUser?.displayName || currentUser?.name) ? (
+                      (currentUser.displayName || currentUser.name).charAt(0).toUpperCase()
                     ) : (
-                      currentUser.email?.charAt(0).toUpperCase()
+                      currentUser?.email?.charAt(0).toUpperCase() || 'U'
                     )}
                   </div>
                 )}
@@ -153,7 +174,7 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
-            {currentUser ? (
+            {loading ? null : isAuthenticated ? (
               <>
                 <li>
                   <Link

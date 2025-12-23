@@ -1,60 +1,118 @@
-import { GraduationCap, BookOpen, DollarSign, Users, Calendar, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { BookOpen, Clock, DollarSign, GraduationCap, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
+import api from '../../api/axiosInstance';
 
 const TutorDashboard = () => {
-  // Mock data - replace with actual API calls
-  const stats = [
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    activeTuitions: 0,
+    totalStudents: 0,
+    monthlyEarnings: 0,
+    pendingApplications: 0,
+  });
+  const [pendingApplications, setPendingApplications] = useState([]);
+  const [ongoingTuitions, setOngoingTuitions] = useState([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch applications
+      const appsRes = await api.get('/api/applications/tutor/my-applications');
+      const allApplications = appsRes.data.applications || [];
+      const pending = allApplications.filter(app => app.status === 'pending');
+      setPendingApplications(pending.slice(0, 3));
+
+      // Fetch ongoing tuitions (approved applications)
+      const ongoingRes = await api.get('/api/applications/tutor/ongoing-tuitions');
+      const ongoing = ongoingRes.data.tuitions || [];
+      setOngoingTuitions(ongoing.slice(0, 3));
+
+      // Fetch revenue
+      const revenueRes = await api.get('/api/payments/tutor/revenue');
+      const payments = revenueRes.data.payments || [];
+      
+      // Calculate monthly earnings (current month)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyEarnings = payments
+        .filter(p => {
+          const paymentDate = new Date(p.transactionDate || p.createdAt);
+          return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+        })
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      // Get unique students from ongoing tuitions
+      const uniqueStudents = new Set(ongoing.map(t => t.tuitionId?.studentId?._id?.toString()).filter(Boolean));
+
+      setStats({
+        activeTuitions: ongoing.length,
+        totalStudents: uniqueStudents.size,
+        monthlyEarnings,
+        pendingApplications: pending.length,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statsData = [
     {
       title: 'Active Tuitions',
-      value: '8',
+      value: stats.activeTuitions.toString(),
       icon: BookOpen,
       color: 'text-primary',
       bgColor: 'bg-primary/20',
-      change: '+2 this month',
     },
     {
       title: 'Total Students',
-      value: '24',
+      value: stats.totalStudents.toString(),
       icon: Users,
       color: 'text-success',
       bgColor: 'bg-success/20',
-      change: '+5 new',
     },
     {
       title: 'Monthly Earnings',
-      value: '৳45,000',
+      value: `৳${stats.monthlyEarnings.toLocaleString()}`,
       icon: DollarSign,
       color: 'text-warning',
       bgColor: 'bg-warning/20',
-      change: '+15%',
     },
     {
-      title: 'Success Rate',
-      value: '92%',
-      icon: TrendingUp,
+      title: 'Pending Applications',
+      value: stats.pendingApplications.toString(),
+      icon: Clock,
       color: 'text-info',
       bgColor: 'bg-info/20',
-      change: '+3%',
     },
   ];
 
-  const pendingApplications = [
-    { id: 1, title: 'Class 9-10 Mathematics', student: 'Student ABC', budget: '৳5,000', time: '2 hours ago' },
-    { id: 2, title: 'Physics Tuition', student: 'Student XYZ', budget: '৳6,000', time: '5 hours ago' },
-    { id: 3, title: 'English Language', student: 'Student DEF', budget: '৳4,500', time: '1 day ago' },
-  ];
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const posted = new Date(date);
+    const diffInSeconds = Math.floor((now - posted) / 1000);
+    
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
 
-  const upcomingClasses = [
-    { id: 1, subject: 'Mathematics', student: 'John Doe', time: '4:00 PM - 6:00 PM', date: 'Today' },
-    { id: 2, subject: 'Physics', student: 'Jane Smith', time: '5:00 PM - 7:00 PM', date: 'Tomorrow' },
-    { id: 3, subject: 'Chemistry', student: 'Mike Johnson', time: '3:00 PM - 5:00 PM', date: 'Dec 17' },
-  ];
-
-  const recentActivities = [
-    { id: 1, activity: 'Application accepted: Class 9-10 Mathematics', status: 'success', time: '3 hours ago' },
-    { id: 2, activity: 'Payment received: ৳5,000 from Student ABC', status: 'success', time: '1 day ago' },
-    { id: 3, activity: 'New application: Physics Tuition', status: 'info', time: '2 days ago' },
-    { id: 4, activity: 'Class completed: Mathematics with John Doe', status: 'success', time: '3 days ago' },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -71,7 +129,7 @@ const TutorDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <div key={index} className="card bg-base-200 shadow-xl">
             <div className="card-body">
               <div className="flex items-center justify-between">
@@ -89,7 +147,7 @@ const TutorDashboard = () => {
         ))}
       </div>
 
-      {/* Pending Applications & Upcoming Classes */}
+      {/* Pending Applications & Ongoing Tuitions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Applications */}
         <div className="card bg-base-200 shadow-xl">
@@ -99,77 +157,82 @@ const TutorDashboard = () => {
               Pending Applications
             </h2>
             <div className="space-y-4">
-              {pendingApplications.map((app) => (
-                <div key={app.id} className="flex items-start justify-between gap-3 pb-4 border-b border-base-300 last:border-0">
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{app.title}</p>
-                    <p className="text-sm text-base-content/70">Student: {app.student}</p>
-                    <p className="text-sm text-primary font-semibold mt-1">Budget: {app.budget}/month</p>
-                    <p className="text-xs text-base-content/50 mt-1">{app.time}</p>
+              {pendingApplications.length === 0 ? (
+                <p className="text-base-content/70 text-center py-4">No pending applications</p>
+              ) : (
+                pendingApplications.map((app) => (
+                  <div key={app._id} className="flex items-start justify-between gap-3 pb-4 border-b border-base-300 last:border-0">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">
+                        {app.tuitionId?.title || `${app.tuitionId?.subject} - Class ${app.tuitionId?.class}`}
+                      </p>
+                      <p className="text-sm text-base-content/70">
+                        Student: {app.tuitionId?.studentId?.name || 'N/A'}
+                      </p>
+                      <p className="text-sm text-primary font-semibold mt-1">
+                        Budget: ৳{app.tuitionId?.budget || 'N/A'}/month
+                      </p>
+                      <p className="text-xs text-base-content/50 mt-1">
+                        {app.createdAt ? getTimeAgo(app.createdAt) : 'Recently'}
+                      </p>
+                    </div>
+                    <Link
+                      to="/dashboard/applications"
+                      className="btn btn-ghost btn-xs"
+                    >
+                      View
+                    </Link>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <button className="btn btn-success btn-xs">
-                      <CheckCircle size={14} />
-                      Accept
-                    </button>
-                    <button className="btn btn-error btn-xs">Decline</button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="card-actions mt-4">
-              <button className="btn btn-primary btn-sm w-full">View All Applications</button>
+              <Link to="/dashboard/applications" className="btn btn-primary btn-sm w-full">
+                View All Applications
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Upcoming Classes */}
+        {/* Ongoing Tuitions */}
         <div className="card bg-base-200 shadow-xl">
           <div className="card-body">
             <h2 className="card-title mb-4 flex items-center gap-2">
-              <Calendar className="text-primary" size={20} />
-              Upcoming Classes
+              <BookOpen className="text-primary" size={20} />
+              Ongoing Tuitions
             </h2>
             <div className="space-y-4">
-              {upcomingClasses.map((classItem) => (
-                <div key={classItem.id} className="flex items-start gap-3 pb-4 border-b border-base-300 last:border-0">
-                  <div className="flex flex-col items-center min-w-[60px]">
-                    <span className="text-lg font-bold">{classItem.date === 'Today' ? 'TODAY' : classItem.date === 'Tomorrow' ? 'TOM' : classItem.date}</span>
-                    {classItem.date !== 'Today' && classItem.date !== 'Tomorrow' && (
-                      <span className="text-xs text-base-content/50">DEC</span>
-                    )}
+              {ongoingTuitions.length === 0 ? (
+                <p className="text-base-content/70 text-center py-4">No ongoing tuitions</p>
+              ) : (
+                ongoingTuitions.map((item) => (
+                  <div key={item._id} className="flex items-start gap-3 pb-4 border-b border-base-300 last:border-0">
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {item.tuitionId?.title || `${item.tuitionId?.subject} - Class ${item.tuitionId?.class}`}
+                      </p>
+                      <p className="text-sm text-base-content/70">
+                        Student: {item.tuitionId?.studentId?.name || 'N/A'}
+                      </p>
+                      <p className="text-sm text-primary">
+                        Schedule: {item.tuitionId?.schedule || 'N/A'}
+                      </p>
+                    </div>
+                    <Link
+                      to="/dashboard/ongoing-tuitions"
+                      className="btn btn-ghost btn-xs"
+                    >
+                      View
+                    </Link>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-semibold">{classItem.subject}</p>
-                    <p className="text-sm text-base-content/70">Student: {classItem.student}</p>
-                    <p className="text-sm text-primary">{classItem.time}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="card-actions mt-4">
-              <button className="btn btn-primary btn-sm w-full">View Full Schedule</button>
+              <Link to="/dashboard/ongoing-tuitions" className="btn btn-primary btn-sm w-full">
+                View All Tuitions
+              </Link>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activities */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Recent Activities</h2>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-base-300 last:border-0">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  activity.status === 'success' ? 'bg-success' : 'bg-info'
-                }`}></div>
-                <div className="flex-1">
-                  <p className="text-sm">{activity.activity}</p>
-                  <p className="text-xs text-base-content/50 mt-1">{activity.time}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -179,18 +242,18 @@ const TutorDashboard = () => {
         <div className="card-body">
           <h2 className="card-title mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="btn btn-primary btn-outline justify-start">
+            <Link to="/tuitions" className="btn btn-primary btn-outline justify-start">
               <BookOpen size={20} />
               Browse Tuitions
-            </button>
-            <button className="btn btn-primary btn-outline justify-start">
+            </Link>
+            <Link to="/dashboard/ongoing-tuitions" className="btn btn-primary btn-outline justify-start">
               <Users size={20} />
               My Students
-            </button>
-            <button className="btn btn-primary btn-outline justify-start">
+            </Link>
+            <Link to="/dashboard/payments" className="btn btn-primary btn-outline justify-start">
               <DollarSign size={20} />
               View Earnings
-            </button>
+            </Link>
           </div>
         </div>
       </div>

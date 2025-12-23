@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   DollarSign,
@@ -13,6 +13,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
+import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 const PaymentHistory = () => {
@@ -20,210 +21,56 @@ const PaymentHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual API call
-  const getPaymentData = () => {
-    if (userRole === 'student') {
-      return [
-        {
-          id: 1,
-          transactionId: 'TXN-2024-001',
-          type: 'Payment',
-          amount: 5000,
-          tutorName: 'Dr. Ahmed Hasan',
-          subject: 'Mathematics',
-          status: 'completed',
-          date: '2024-12-15',
-          paymentMethod: 'bKash',
-          invoice: true,
-        },
-        {
-          id: 2,
-          transactionId: 'TXN-2024-002',
-          type: 'Payment',
-          amount: 4500,
-          tutorName: 'Fatima Rahman',
-          subject: 'Physics',
-          status: 'completed',
-          date: '2024-12-10',
-          paymentMethod: 'Nagad',
-          invoice: true,
-        },
-        {
-          id: 3,
-          transactionId: 'TXN-2024-003',
-          type: 'Payment',
-          amount: 6000,
-          tutorName: 'Karim Uddin',
-          subject: 'English',
-          status: 'pending',
-          date: '2024-12-20',
-          paymentMethod: 'Bank Transfer',
-          invoice: false,
-        },
-        {
-          id: 4,
-          transactionId: 'TXN-2024-004',
-          type: 'Payment',
-          amount: 5000,
-          tutorName: 'Dr. Ahmed Hasan',
-          subject: 'Mathematics',
-          status: 'failed',
-          date: '2024-12-05',
-          paymentMethod: 'bKash',
-          invoice: false,
-        },
-        {
-          id: 5,
-          transactionId: 'TXN-2024-005',
-          type: 'Payment',
-          amount: 5500,
-          tutorName: 'Fatima Rahman',
-          subject: 'Physics',
-          status: 'completed',
-          date: '2024-11-28',
-          paymentMethod: 'Rocket',
-          invoice: true,
-        },
-      ];
-    } else if (userRole === 'tutor') {
-      return [
-        {
-          id: 1,
-          transactionId: 'TXN-2024-001',
-          type: 'Earning',
-          amount: 5000,
-          studentName: 'Student ABC',
-          subject: 'Mathematics',
-          status: 'completed',
-          date: '2024-12-15',
-          paymentMethod: 'bKash',
-          invoice: true,
-        },
-        {
-          id: 2,
-          transactionId: 'TXN-2024-002',
-          type: 'Earning',
-          amount: 4500,
-          studentName: 'Student XYZ',
-          subject: 'Physics',
-          status: 'completed',
-          date: '2024-12-10',
-          paymentMethod: 'Nagad',
-          invoice: true,
-        },
-        {
-          id: 3,
-          transactionId: 'TXN-2024-003',
-          type: 'Earning',
-          amount: 6000,
-          studentName: 'Student DEF',
-          subject: 'English',
-          status: 'pending',
-          date: '2024-12-20',
-          paymentMethod: 'Bank Transfer',
-          invoice: false,
-        },
-        {
-          id: 4,
-          transactionId: 'TXN-2024-004',
-          type: 'Earning',
-          amount: 5000,
-          studentName: 'Student ABC',
-          subject: 'Mathematics',
-          status: 'completed',
-          date: '2024-11-25',
-          paymentMethod: 'bKash',
-          invoice: true,
-        },
-        {
-          id: 5,
-          transactionId: 'TXN-2024-005',
-          type: 'Earning',
-          amount: 5500,
-          studentName: 'Student GHI',
-          subject: 'Chemistry',
-          status: 'completed',
-          date: '2024-11-20',
-          paymentMethod: 'Rocket',
-          invoice: true,
-        },
-      ];
-    } else {
-      // Admin - all transactions
-      return [
-        {
-          id: 1,
-          transactionId: 'TXN-2024-001',
-          type: 'Payment',
-          amount: 5000,
-          from: 'Student ABC',
-          to: 'Dr. Ahmed Hasan',
-          subject: 'Mathematics',
-          status: 'completed',
-          date: '2024-12-15',
-          paymentMethod: 'bKash',
-          invoice: true,
-        },
-        {
-          id: 2,
-          transactionId: 'TXN-2024-002',
-          type: 'Payment',
-          amount: 4500,
-          from: 'Student XYZ',
-          to: 'Fatima Rahman',
-          subject: 'Physics',
-          status: 'completed',
-          date: '2024-12-10',
-          paymentMethod: 'Nagad',
-          invoice: true,
-        },
-        {
-          id: 3,
-          transactionId: 'TXN-2024-003',
-          type: 'Payment',
-          amount: 6000,
-          from: 'Student DEF',
-          to: 'Karim Uddin',
-          subject: 'English',
-          status: 'pending',
-          date: '2024-12-20',
-          paymentMethod: 'Bank Transfer',
-          invoice: false,
-        },
-        {
-          id: 4,
-          transactionId: 'TXN-2024-004',
-          type: 'Payment',
-          amount: 5000,
-          from: 'Student ABC',
-          to: 'Dr. Ahmed Hasan',
-          subject: 'Mathematics',
-          status: 'failed',
-          date: '2024-12-05',
-          paymentMethod: 'bKash',
-          invoice: false,
-        },
-        {
-          id: 5,
-          transactionId: 'TXN-2024-005',
-          type: 'Payment',
-          amount: 5500,
-          from: 'Student GHI',
-          to: 'Fatima Rahman',
-          subject: 'Chemistry',
-          status: 'completed',
-          date: '2024-11-28',
-          paymentMethod: 'Rocket',
-          invoice: true,
-        },
-      ];
+  useEffect(() => {
+    fetchPayments();
+  }, [userRole]);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      if (userRole === 'student') {
+        const { data } = await api.get('/api/payments/history');
+        setPayments(data.payments || []);
+      } else if (userRole === 'tutor') {
+        const { data } = await api.get('/api/payments/tutor/revenue');
+        setPayments(data.payments || []);
+      } else {
+        // Admin - would need admin endpoint
+        setPayments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast.error('Failed to load payment history');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const payments = getPaymentData();
+  // Transform backend data to match UI format
+  const getPaymentData = () => {
+    return payments.map((payment) => ({
+      id: payment._id,
+      transactionId: payment.stripePaymentIntentId || payment._id.substring(0, 12).toUpperCase(),
+      type: userRole === 'student' ? 'Payment' : 'Earning',
+      amount: payment.amount || 0,
+      tutorName: payment.tutorId?.name,
+      studentName: payment.studentId?.name,
+      from: payment.studentId?.name,
+      to: payment.tutorId?.name,
+      subject: payment.tuitionId?.subject || 'N/A',
+      status: payment.status || 'pending',
+      date: new Date(payment.transactionDate || payment.createdAt).toLocaleDateString(),
+      paymentMethod: payment.paymentMethod || 'stripe',
+      invoice: payment.status === 'completed',
+    }));
+  };
 
-  const filteredPayments = payments.filter((payment) => {
+  const paymentData = getPaymentData();
+
+  const filteredPayments = paymentData.filter((payment) => {
     const matchesSearch = 
       payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (userRole === 'student' && payment.tutorName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -281,6 +128,14 @@ const PaymentHistory = () => {
     toast.success('Exporting payment history...');
     // Handle export functionality
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,26 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { auth } from '../firebase/firebase.config';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Lock,
-  Camera,
-  Bell,
-  Shield,
-  Save,
-  GraduationCap,
-  BookOpen,
-  FileText,
-  Trash2,
+    Bell,
+    Camera,
+    GraduationCap,
+    Lock,
+    Mail,
+    MapPin,
+    Phone,
+    Save,
+    Shield,
+    Trash2,
+    User
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
+import { auth } from '../firebase/firebase.config';
 
 const ProfileSettings = () => {
-  const { currentUser, userRole, updateUserRole } = useAuth();
+  const { currentUser, userRole, updateUserRole, setAuthUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
 
@@ -31,6 +30,7 @@ const ProfileSettings = () => {
     phone: '',
     address: '',
     bio: '',
+    photoUrl: '',
   });
 
   // Password Change
@@ -67,14 +67,17 @@ const ProfileSettings = () => {
     showPhone: false,
   });
 
+  // Load profile data from backend when component mounts
+  // Sync form with currentUser (which now comes fully populated from AuthContext)
   useEffect(() => {
     if (currentUser) {
       setPersonalInfo({
-        name: currentUser.displayName || '',
+        name: currentUser.displayName || currentUser.name || '',
         email: currentUser.email || '',
-        phone: '',
-        address: '',
-        bio: '',
+        phone: currentUser.phone || '',
+        address: currentUser.address || '',
+        bio: currentUser.bio || '',
+        photoUrl: currentUser.photoURL || currentUser.photoUrl || '',
       });
     }
   }, [currentUser]);
@@ -117,13 +120,35 @@ const ProfileSettings = () => {
   const handleSavePersonalInfo = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      await updateProfile(auth.currentUser, {
-        displayName: personalInfo.name,
-      });
+      // Send updated fields to backend
+      const payload = {
+        name: personalInfo.name,
+        phone: personalInfo.phone,
+        address: personalInfo.address,
+        bio: personalInfo.bio,
+        photoUrl: personalInfo.photoUrl,
+      };
+      const { data } = await api.put('/api/auth/me', payload);
+
+      // Also update Firebase profile name if needed
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: personalInfo.name });
+      }
+
+      // Update AuthContext immediately so UI reflects changes without reload
+      if (data?.user) {
+         // Merge new data with existing currentUser to keep everything in sync
+         const updatedUser = {
+            ...currentUser,
+            ...data.user,
+            displayName: data.user.name || currentUser.displayName,
+         };
+         setAuthUser(updatedUser);
+      }
       toast.success('Profile updated successfully!');
     } catch (error) {
+      console.error('Update error:', error);
       toast.error(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
@@ -243,20 +268,28 @@ const ProfileSettings = () => {
 
                 {/* Profile Picture */}
                 <div className="flex items-center gap-6 mb-6 pb-6 border-b border-base-300">
-                  <div className="w-24 h-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold">
-                    {personalInfo.name.charAt(0) || currentUser?.email?.charAt(0)}
+                  <div className="w-24 h-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold overflow-hidden">
+                    {personalInfo.photoUrl ? (
+                      <img src={personalInfo.photoUrl} alt={personalInfo.name} className="w-full h-full object-cover" />
+                    ) : (
+                      personalInfo.name.charAt(0) || currentUser?.email?.charAt(0)
+                    )}
                   </div>
-                  <div>
-                    <button
-                      onClick={handleProfilePictureUpload}
-                      className="btn btn-outline btn-sm"
-                    >
-                      <Camera size={18} />
-                      Change Photo
-                    </button>
-                    <p className="text-xs text-base-content/50 mt-2">
-                      JPG, PNG or GIF. Max size 2MB
-                    </p>
+                  <div className="flex-1">
+                    <label className="label">
+                      <span className="label-text font-semibold">Photo URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      name="photoUrl"
+                      placeholder="https://example.com/photo.jpg"
+                      className="input input-bordered w-full bg-base-100"
+                      value={personalInfo.photoUrl}
+                      onChange={handlePersonalInfoChange}
+                    />
+                    <label className="label">
+                      <span className="label-text-alt">Enter a URL for your profile picture</span>
+                    </label>
                   </div>
                 </div>
 

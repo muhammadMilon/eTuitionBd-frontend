@@ -12,7 +12,11 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  return currentUser ? children : <Navigate to="/login" />;
+  // Check both currentUser and token for authentication
+  const token = typeof window !== 'undefined' ? localStorage.getItem('etuitionbd_token') : null;
+  const isAuthenticated = currentUser || token;
+
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;

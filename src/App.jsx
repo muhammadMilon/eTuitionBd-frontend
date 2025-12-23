@@ -1,32 +1,49 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
-import PrivateRoute from './components/PrivateRoute';
-import MainLayout from './components/MainLayout';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import DashboardLayout from './components/DashboardLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import MainLayout from './components/MainLayout';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider } from './context/AuthContext';
 
 // Public Pages
-import Home from './pages/Home';
-import Tuitions from './pages/Tuitions';
-import TuitionDetails from './pages/TuitionDetails';
-import Tutors from './pages/Tutors';
-import TutorProfile from './pages/TutorProfile';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Home from './pages/Home';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import Register from './pages/Register';
+import TuitionDetails from './pages/TuitionDetails';
+import Tuitions from './pages/Tuitions';
+import TutorProfile from './pages/TutorProfile';
+import Tutors from './pages/Tutors';
 
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
 import PaymentHistory from './pages/PaymentHistory';
 import ProfileSettings from './pages/ProfileSettings';
 
+// Student Dashboard Pages
+import AllTutors from './pages/dashboards/AllTutors';
+import AppliedTutors from './pages/dashboards/AppliedTutors';
+import Checkout from './pages/dashboards/Checkout';
+import EditTuition from './pages/dashboards/EditTuition';
+import MyTuitions from './pages/dashboards/MyTuitions';
+import PostNewTuition from './pages/dashboards/PostNewTuition';
+
+// Tutor Dashboard Pages
+import MyApplications from './pages/dashboards/MyApplications';
+import TutorOngoingTuitions from './pages/dashboards/TutorOngoingTuitions';
+import RevenueHistory from './pages/dashboards/RevenueHistory';
+
+// Admin Dashboard Pages
+import TuitionManagement from './pages/dashboards/TuitionManagement';
+import UserManagement from './pages/dashboards/UserManagement';
+
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <Toaster
             position="top-right"
@@ -75,10 +92,27 @@ function App() {
               }
             >
               <Route index element={<Dashboard />} />
-              <Route path="tuitions" element={<div className="card bg-base-200"><div className="card-body"><h2 className="card-title">My Tuitions</h2><p>Tuition management page coming soon...</p></div></div>} />}
-              <Route path="tutors" element={<div className="card bg-base-200"><div className="card-body"><h2 className="card-title">Tutors</h2><p>Tutors management page coming soon...</p></div></div>} />}
+              
+              {/* Student Routes */}
+              <Route path="tuitions" element={<MyTuitions />} />
+              <Route path="tuitions/:id" element={<TuitionDetails />} />
+              <Route path="tuitions/:id/edit" element={<EditTuition />} />
+              <Route path="post-tuition" element={<PostNewTuition />} />
+              <Route path="applications" element={<AppliedTutors />} />
+              <Route path="checkout" element={<Checkout />} />
+              <Route path="tutors" element={<AllTutors />} />
+              
+              {/* Tutor Routes */}
+              <Route path="my-applications" element={<MyApplications />} />
+              <Route path="ongoing-tuitions" element={<TutorOngoingTuitions />} />
+              <Route path="revenue" element={<RevenueHistory />} />
+              
+              {/* Admin Routes */}
+              <Route path="users" element={<UserManagement />} />
+              <Route path="tuition-management" element={<TuitionManagement />} />
+              
               <Route path="payments" element={<PaymentHistory />} />
-              <Route path="profile" element={<ProfileSettings />} />}
+              <Route path="profile" element={<ProfileSettings />} />
             </Route>
 
             {/* Catch all - show 404 page */}

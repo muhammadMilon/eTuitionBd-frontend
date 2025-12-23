@@ -1,8 +1,10 @@
+
+import { Lock, Mail, User, UserPlus } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -13,7 +15,7 @@ const Register = () => {
     role: 'student', // Default role
   });
   const [loading, setLoading] = useState(false);
-  const { signup, googleSignIn } = useAuth();
+  const { signup, googleSignIn, setAuthUser } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -41,9 +43,37 @@ const Register = () => {
     try {
       await signup(formData.email, formData.password, formData.name, formData.role);
       toast.success('Account created successfully!');
-      navigate('/dashboard');
+      navigate('/dashboard/profile');
     } catch (error) {
-      toast.error(error.message || 'Failed to create account');
+      console.log('Registration error:', error);
+      // If Firebase blocks email/password sign‑up, fall back to backend registration
+      if (error.code === 'auth/operation-not-allowed') {
+          try {
+            const { data } = await api.post('/api/auth/register', {
+              email: formData.email,
+              password: formData.password,
+              name: formData.name,
+              role: formData.role,
+            });
+            toast.success('Account created via backend!');
+            // Store backend JWT and role
+            if (data?.token) {
+              localStorage.setItem('etuitionbd_token', data.token);
+            }
+            if (data?.user?.role) {
+              localStorage.setItem(`userRole_${data.user.uid}`, data.user.role);
+            }
+            // Update AuthContext with the newly logged‑in user
+            if (data?.user) {
+              setAuthUser(data.user);
+            }
+            navigate('/dashboard/profile');
+          } catch (backendError) {
+            toast.error(backendError.message || 'Backend registration failed');
+          }
+      } else {
+        toast.error(error.message || 'Failed to create account');
+      }
     } finally {
       setLoading(false);
     }
@@ -154,13 +184,7 @@ const Register = () => {
               >
                 <option value="student">Student</option>
                 <option value="tutor">Tutor</option>
-                <option value="admin">Admin</option>
               </select>
-              <label className="label">
-                <span className="label-text-alt text-base-content/50">
-                  Choose your role. (Admin access requires verification)
-                </span>
-              </label>
             </div>
 
             <button

@@ -1,8 +1,9 @@
+import { Lock, LogIn, Mail } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,7 @@ const Login = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const { login, googleSignIn } = useAuth();
+  const { login, googleSignIn, setAuthUser } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -23,13 +24,49 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      await login(formData.email, formData.password);
-      toast.success('Logged in successfully!');
-      navigate('/dashboard');
+        const { data } = await api.post('/api/auth/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+        toast.success('Logged in via backend!');
+        if (data?.token) {
+          localStorage.setItem('etuitionbd_token', data.token);
+        }
+        if (data?.user?.role) {
+          localStorage.setItem(`userRole_${data.user.uid}`, data.user.role);
+        }
+        // Update AuthContext with logged-in user
+        if (data?.user) {
+          setAuthUser(data.user);
+        }
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
     } catch (error) {
-      toast.error(error.message || 'Failed to log in');
+      console.log('Login error (Firebase):', error);
+      // If Firebase blocks email/password, fall back to backend login
+      if (error.code === 'auth/operation-not-allowed') {
+        try {
+          const { data } = await api.post('/api/auth/login', {
+            email: formData.email,
+            password: formData.password,
+          });
+          toast.success('Logged in via backend!');
+          if (data?.token) {
+            localStorage.setItem('etuitionbd_token', data.token);
+          }
+          if (data?.user?.role) {
+            localStorage.setItem(`userRole_${data.user.uid}`, data.user.role);
+          }
+          navigate('/dashboard');
+        } catch (backendError) {
+          toast.error(backendError.message || 'Backend login failed');
+        }
+      } else {
+        toast.error(error.message || 'Failed to log in');
+      }
     } finally {
       setLoading(false);
     }

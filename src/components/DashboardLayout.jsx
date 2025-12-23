@@ -1,8 +1,9 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, BookOpen, Users, User, LogOut, Menu, Shield, GraduationCap, Settings, DollarSign } from 'lucide-react';
+import { BookOpen, DollarSign, GraduationCap, LayoutDashboard, LogOut, Menu, Settings, Shield, User, Users } from 'lucide-react';
 import { useState } from 'react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import Navbar from './Navbar';
 
 const DashboardLayout = () => {
   const { currentUser, logout, userRole } = useAuth();
@@ -28,20 +29,17 @@ const DashboardLayout = () => {
     if (userRole === 'admin') {
       return [
         ...baseLinks,
-        { path: '/dashboard/users', label: 'Manage Users', icon: Users },
-        { path: '/dashboard/tuitions', label: 'Review Tuitions', icon: BookOpen },
-        { path: '/dashboard/tutors', label: 'Verify Tutors', icon: Shield },
+        { path: '/dashboard/users', label: 'User Management', icon: Users },
+        { path: '/dashboard/tuition-management', label: 'Tuition Management', icon: BookOpen },
         { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
-        { path: '/dashboard/settings', label: 'Settings', icon: Settings },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     } else if (userRole === 'tutor') {
       return [
         ...baseLinks,
-        { path: '/dashboard/tuitions', label: 'Browse Tuitions', icon: BookOpen },
-        { path: '/dashboard/students', label: 'My Students', icon: Users },
-        { path: '/dashboard/earnings', label: 'Earnings', icon: GraduationCap },
-        { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
+        { path: '/dashboard/my-applications', label: 'My Applications', icon: BookOpen },
+        { path: '/dashboard/ongoing-tuitions', label: 'Ongoing Tuitions', icon: BookOpen },
+        { path: '/dashboard/payments', label: 'Revenue History', icon: DollarSign },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     } else {
@@ -60,23 +58,26 @@ const DashboardLayout = () => {
   const dashboardLinks = getDashboardLinks();
 
   return (
-    <div className="min-h-screen bg-base-100 flex">
-      {/* Mobile Sidebar Toggle */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 btn btn-square btn-ghost"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        <Menu size={24} />
-      </button>
+    <div className="min-h-screen bg-base-100 flex flex-col">
+      <Navbar />
+      
+      <div className="flex flex-1 relative">
+        {/* Mobile Sidebar Toggle - Adjusted position */}
+        <button
+          className="lg:hidden fixed top-[4.5rem] left-4 z-40 btn btn-square btn-ghost bg-base-100 shadow-md"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <Menu size={24} />
+        </button>
 
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-64 bg-base-200 border-r border-base-300 transition-transform duration-300`}
-      >
-        <div className="h-full flex flex-col p-4">
-          <div className="mb-8 mt-12 lg:mt-4">
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-64 bg-base-200 border-r border-base-300 transition-transform duration-300 lg:h-auto h-[calc(100vh-64px)] lg:mt-0 mt-16`}
+        >
+          <div className="h-full flex flex-col p-4 overflow-y-auto">
+            <div className="mb-6 mt-2">
             <h2 className="text-2xl font-bold text-primary">Dashboard</h2>
             {userRole && (
               <span className="badge badge-sm badge-primary mt-2 capitalize">
@@ -144,10 +145,11 @@ const DashboardLayout = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <main className="flex-1 p-4 lg:p-8">
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8">
           <Outlet />
         </main>
+      </div>
       </div>
     </div>
   );

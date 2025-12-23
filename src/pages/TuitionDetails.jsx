@@ -19,6 +19,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../api/axiosInstance';
 
 const TuitionDetails = () => {
   const { id } = useParams();
@@ -26,79 +27,86 @@ const TuitionDetails = () => {
   const { currentUser, userRole } = useAuth();
   const [tuition, setTuition] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const [applicationData, setApplicationData] = useState({
-    message: '',
+    qualifications: '',
+    experience: '',
     expectedSalary: '',
     availability: '',
+    message: '',
   });
 
-  // Mock data - replace with actual API call
   useEffect(() => {
-    // Simulate fetching tuition details by ID
-    const mockTuition = {
-      id: parseInt(id),
-      title: 'Class 9-10 Mathematics Tuition',
-      subject: 'Mathematics',
-      class: '9-10',
-      location: 'Dhanmondi, Dhaka',
-      budget: '5000-7000',
-      schedule: 'Saturday & Sunday, 4 PM - 6 PM',
-      postedDate: '2024-12-13',
-      description: 'Looking for an experienced Mathematics tutor for Class 9-10. The student needs help with algebra, geometry, and trigonometry. Prefer someone who can teach in Bengali and English.',
-      requirements: [
-        'Minimum 3 years of teaching experience',
-        'Bachelor degree in Mathematics or related field',
-        'Ability to teach in both Bengali and English',
-        'Patient and understanding teaching style',
-      ],
-      student: {
-        name: 'Student ABC',
-        email: 'student@example.com',
-        phone: '+880 1234 567890',
-        address: 'Dhanmondi, Dhaka',
-      },
-      status: 'active',
-      applicationsCount: 5,
-    };
+    fetchTuitionDetails();
+  }, [id, currentUser]);
 
-    const mockApplications = [
-      {
-        id: 1,
-        tutorName: 'Dr. Ahmed Hasan',
-        tutorEmail: 'ahmed@example.com',
-        experience: '10 years',
-        education: 'PhD in Mathematics',
-        expectedSalary: '৳6,000',
-        status: 'pending',
-        appliedDate: '2024-12-14',
-      },
-      {
-        id: 2,
-        tutorName: 'Fatima Rahman',
-        tutorEmail: 'fatima@example.com',
-        experience: '7 years',
-        education: 'MSc in Mathematics',
-        expectedSalary: '৳5,500',
-        status: 'pending',
-        appliedDate: '2024-12-14',
-      },
-    ];
+  const fetchTuitionDetails = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/api/tuitions/${id}`);
+      setTuition(data.tuition);
 
-    setTuition(mockTuition);
-    setApplications(mockApplications);
-  }, [id]);
+      // If student, fetch applications
+      if (userRole === 'student' && data.tuition?.studentId?._id?.toString() === currentUser?._id?.toString()) {
+        try {
+          const appsRes = await api.get(`/api/applications/tuition/${id}`);
+          setApplications(appsRes.data.applications || []);
+        } catch (err) {
+          console.error('Error fetching applications:', err);
+        }
+      }
 
-  const handleApplicationSubmit = (e) => {
+      // If tutor, check if already applied
+      if (userRole === 'tutor' && currentUser) {
+        try {
+          const appsRes = await api.get('/api/applications/tutor/my-applications');
+          const myApps = appsRes.data.applications || [];
+          const applied = myApps.some(app => app.tuitionId?._id?.toString() === id);
+          setHasApplied(applied);
+        } catch (err) {
+          console.error('Error checking application:', err);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tuition:', error);
+      toast.error('Failed to load tuition details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplicationSubmit = async (e) => {
     e.preventDefault();
-    // Handle application submission
-    toast.success('Application submitted successfully!');
-    setShowApplicationForm(false);
-    setApplicationData({
-      message: '',
-      expectedSalary: '',
-      availability: '',
-    });
+    
+    if (!applicationData.qualifications || !applicationData.experience || !applicationData.expectedSalary || !applicationData.availability) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await api.post(`/api/applications/apply/${id}`, applicationData);
+      toast.success('Application submitted successfully!');
+      setShowApplicationForm(false);
+      setHasApplied(true);
+      setApplicationData({
+        qualifications: '',
+        experience: '',
+        expectedSalary: '',
+        availability: '',
+        message: '',
+      });
+      // Refresh tuition to update applications count
+      fetchTuitionDetails();
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast.error(error.response?.data?.message || 'Failed to submit application');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleApplicationChange = (e) => {
@@ -108,10 +116,23 @@ const TuitionDetails = () => {
     });
   };
 
-  if (!tuition) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (!tuition) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Tuition Not Found</h2>
+          <Link to="/tuitions" className="btn btn-primary">
+            Back to Tuitions
+          </Link>
+        </div>
       </div>
     );
   }
@@ -137,14 +158,15 @@ const TuitionDetails = () => {
               <div className="card-body">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h1 className="text-3xl font-bold mb-2">{tuition.title}</h1>
+                    <h1 className="text-3xl font-bold mb-2">{tuition.title || `${tuition.subject} - Class ${tuition.class}`}</h1>
                     <span className={`badge ${
-                      tuition.status === 'active' ? 'badge-success' : 'badge-warning'
+                      tuition.status === 'active' || tuition.status === 'approved' ? 'badge-success' : 
+                      tuition.status === 'pending' ? 'badge-warning' : 'badge-error'
                     }`}>
                       {tuition.status}
                     </span>
                   </div>
-                  {userRole === 'tutor' && tuition.status === 'active' && (
+                  {userRole === 'tutor' && (tuition.status === 'approved' || tuition.status === 'active') && !hasApplied && (
                     <button
                       onClick={() => setShowApplicationForm(!showApplicationForm)}
                       className="btn btn-primary"
@@ -152,6 +174,9 @@ const TuitionDetails = () => {
                       <Send size={20} />
                       {showApplicationForm ? 'Cancel' : 'Apply Now'}
                     </button>
+                  )}
+                  {userRole === 'tutor' && hasApplied && (
+                    <span className="badge badge-success">Already Applied</span>
                   )}
                 </div>
 
@@ -193,7 +218,7 @@ const TuitionDetails = () => {
                     </div>
                     <div>
                       <p className="text-xs text-base-content/50">Budget</p>
-                      <p className="font-semibold">৳{tuition.budget}/month</p>
+                      <p className="font-semibold">৳{tuition.budget || 'N/A'}/month</p>
                     </div>
                   </div>
 
@@ -213,22 +238,79 @@ const TuitionDetails = () => {
                     </div>
                     <div>
                       <p className="text-xs text-base-content/50">Posted</p>
-                      <p className="font-semibold">{tuition.postedDate}</p>
+                      <p className="font-semibold">
+                        {tuition.createdAt ? new Date(tuition.createdAt).toLocaleDateString() : 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Application Form */}
+            {/* Application Form Modal */}
             {showApplicationForm && userRole === 'tutor' && (
               <div className="card bg-base-200 shadow-xl">
                 <div className="card-body">
                   <h2 className="card-title mb-4">Apply for This Tuition</h2>
                   <form onSubmit={handleApplicationSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="label">
+                          <span className="label-text">Name <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered w-full bg-base-100"
+                          value={currentUser?.displayName || currentUser?.name || ''}
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="label">
+                          <span className="label-text">Email <span className="text-error">*</span></span>
+                        </label>
+                        <input
+                          type="email"
+                          className="input input-bordered w-full bg-base-100"
+                          value={currentUser?.email || ''}
+                          disabled
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <label className="label">
-                        <span className="label-text">Expected Salary (৳/month)</span>
+                        <span className="label-text">Qualifications <span className="text-error">*</span></span>
+                      </label>
+                      <input
+                        type="text"
+                        name="qualifications"
+                        placeholder="e.g., BSc in Mathematics, MSc in Physics"
+                        className="input input-bordered w-full bg-base-100"
+                        value={applicationData.qualifications}
+                        onChange={handleApplicationChange}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Experience <span className="text-error">*</span></span>
+                      </label>
+                      <input
+                        type="text"
+                        name="experience"
+                        placeholder="e.g., 5 years of teaching experience"
+                        className="input input-bordered w-full bg-base-100"
+                        value={applicationData.experience}
+                        onChange={handleApplicationChange}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Expected Salary (৳/month) <span className="text-error">*</span></span>
                       </label>
                       <input
                         type="number"
@@ -243,7 +325,7 @@ const TuitionDetails = () => {
 
                     <div>
                       <label className="label">
-                        <span className="label-text">Availability</span>
+                        <span className="label-text">Availability <span className="text-error">*</span></span>
                       </label>
                       <input
                         type="text"
@@ -258,7 +340,7 @@ const TuitionDetails = () => {
 
                     <div>
                       <label className="label">
-                        <span className="label-text">Message to Student</span>
+                        <span className="label-text">Message to Student (Optional)</span>
                       </label>
                       <textarea
                         name="message"
@@ -266,14 +348,26 @@ const TuitionDetails = () => {
                         placeholder="Introduce yourself and explain why you're a good fit..."
                         value={applicationData.message}
                         onChange={handleApplicationChange}
-                        required
                       ></textarea>
                     </div>
 
                     <div className="card-actions">
-                      <button type="submit" className="btn btn-primary w-full">
-                        <Send size={20} />
-                        Submit Application
+                      <button
+                        type="button"
+                        onClick={() => setShowApplicationForm(false)}
+                        className="btn btn-ghost"
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn btn-primary" disabled={submitting}>
+                        {submitting ? (
+                          <span className="loading loading-spinner"></span>
+                        ) : (
+                          <>
+                            <Send size={20} />
+                            Submit Application
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
@@ -288,7 +382,7 @@ const TuitionDetails = () => {
                   <FileText size={20} />
                   Description
                 </h2>
-                <p className="text-base-content/80 leading-relaxed">{tuition.description}</p>
+                <p className="text-base-content/80 leading-relaxed">{tuition.description || 'No description provided'}</p>
               </div>
             </div>
 
@@ -299,19 +393,23 @@ const TuitionDetails = () => {
                   <CheckCircle size={20} />
                   Requirements
                 </h2>
-                <ul className="space-y-2">
-                  {tuition.requirements.map((req, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle className="text-success mt-1" size={16} />
-                      <span className="text-base-content/80">{req}</span>
-                    </li>
-                  ))}
-                </ul>
+                {tuition.requirements && tuition.requirements.length > 0 ? (
+                  <ul className="space-y-2">
+                    {tuition.requirements.map((req, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="text-success mt-1" size={16} />
+                        <span className="text-base-content/80">{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-base-content/70">No specific requirements listed</p>
+                )}
               </div>
             </div>
 
             {/* Applications List (for Student/Owner) */}
-            {userRole === 'student' && (
+            {userRole === 'student' && tuition.studentId?._id?.toString() === currentUser?._id?.toString() && (
               <div className="card bg-base-200 shadow-xl">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-4">
@@ -323,40 +421,48 @@ const TuitionDetails = () => {
                   <div className="space-y-4">
                     {applications.map((application) => (
                       <div
-                        key={application.id}
+                        key={application._id}
                         className="p-4 rounded-lg bg-base-300 border border-base-300"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold">{application.tutorName}</h3>
+                              <h3 className="font-semibold">{application.tutorId?.name || 'Tutor'}</h3>
                               <span className={`badge badge-sm ${
-                                application.status === 'pending' ? 'badge-warning' : 'badge-success'
+                                application.status === 'pending' ? 'badge-warning' : 
+                                application.status === 'approved' ? 'badge-success' : 'badge-error'
                               }`}>
                                 {application.status}
                               </span>
                             </div>
                             <p className="text-sm text-base-content/70 mb-1">
-                              Education: {application.education}
+                              Qualifications: {application.qualifications || 'N/A'}
                             </p>
                             <p className="text-sm text-base-content/70 mb-1">
-                              Experience: {application.experience}
+                              Experience: {application.experience || 'N/A'}
                             </p>
                             <p className="text-sm text-primary font-semibold">
-                              Expected Salary: {application.expectedSalary}/month
+                              Expected Salary: ৳{application.expectedSalary?.toLocaleString() || 'N/A'}/month
                             </p>
+                            {application.message && (
+                              <p className="text-sm text-base-content/70 mt-2 italic">
+                                "{application.message}"
+                              </p>
+                            )}
                             <p className="text-xs text-base-content/50 mt-2">
-                              Applied on: {application.appliedDate}
+                              Applied on: {new Date(application.createdAt).toLocaleDateString()}
                             </p>
                           </div>
-                          <div className="flex gap-2">
-                            <button className="btn btn-success btn-sm">
-                              Accept
-                            </button>
-                            <button className="btn btn-error btn-sm">
-                              Decline
-                            </button>
-                          </div>
+                          {application.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Link
+                                to={`/dashboard/applications?tuitionId=${tuition._id}`}
+                                className="btn btn-success btn-sm"
+                              >
+                                View
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -384,30 +490,36 @@ const TuitionDetails = () => {
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-base-content/50">Name</p>
-                    <p className="font-semibold">{tuition.student.name}</p>
+                    <p className="font-semibold">{tuition.studentId?.name || 'N/A'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-base-content/50">Location</p>
-                    <p className="font-semibold">{tuition.student.address}</p>
-                  </div>
+                  {tuition.studentId?.address && (
+                    <div>
+                      <p className="text-sm text-base-content/50">Location</p>
+                      <p className="font-semibold">{tuition.studentId.address}</p>
+                    </div>
+                  )}
                   <div className="divider my-2"></div>
                   <div>
                     <p className="text-sm text-base-content/50 mb-2">Contact</p>
                     <div className="flex flex-col gap-2">
-                      <a
-                        href={`mailto:${tuition.student.email}`}
-                        className="btn btn-outline btn-sm justify-start"
-                      >
-                        <Mail size={16} />
-                        {tuition.student.email}
-                      </a>
-                      <a
-                        href={`tel:${tuition.student.phone}`}
-                        className="btn btn-outline btn-sm justify-start"
-                      >
-                        <Phone size={16} />
-                        {tuition.student.phone}
-                      </a>
+                      {tuition.studentId?.email && (
+                        <a
+                          href={`mailto:${tuition.studentId.email}`}
+                          className="btn btn-outline btn-sm justify-start"
+                        >
+                          <Mail size={16} />
+                          {tuition.studentId.email}
+                        </a>
+                      )}
+                      {tuition.studentId?.phone && (
+                        <a
+                          href={`tel:${tuition.studentId.phone}`}
+                          className="btn btn-outline btn-sm justify-start"
+                        >
+                          <Phone size={16} />
+                          {tuition.studentId.phone}
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -421,32 +533,47 @@ const TuitionDetails = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-base-content/70">Applications</span>
-                    <span className="font-bold">{tuition.applicationsCount}</span>
+                    <span className="font-bold">{tuition.applicationsCount || applications.length || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base-content/70">Status</span>
                     <span className={`badge ${
-                      tuition.status === 'active' ? 'badge-success' : 'badge-warning'
+                      tuition.status === 'active' || tuition.status === 'approved' ? 'badge-success' : 
+                      tuition.status === 'pending' ? 'badge-warning' : 'badge-error'
                     }`}>
                       {tuition.status}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-base-content/70">Posted</span>
-                    <span className="font-semibold">{tuition.postedDate}</span>
+                    <span className="font-semibold">
+                      {tuition.createdAt ? new Date(tuition.createdAt).toLocaleDateString() : 'N/A'}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Actions (for Students) */}
-            {userRole === 'student' && (
+            {userRole === 'student' && tuition.studentId?._id?.toString() === currentUser?._id?.toString() && (
               <div className="card bg-base-200 shadow-xl">
                 <div className="card-body">
                   <h2 className="card-title mb-4">Actions</h2>
                   <div className="space-y-2">
-                    <button className="btn btn-primary w-full">Edit Post</button>
-                    <button className="btn btn-error btn-outline w-full">Close Post</button>
+                    {(tuition.status === 'pending' || tuition.status === 'rejected') && (
+                      <Link
+                        to={`/dashboard/tuitions/${tuition._id}/edit`}
+                        className="btn btn-primary w-full"
+                      >
+                        Edit Post
+                      </Link>
+                    )}
+                    <Link
+                      to={`/dashboard/applications?tuitionId=${tuition._id}`}
+                      className="btn btn-info w-full"
+                    >
+                      View Applications
+                    </Link>
                   </div>
                 </div>
               </div>

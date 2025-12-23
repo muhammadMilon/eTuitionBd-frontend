@@ -1,141 +1,289 @@
-import { useState } from 'react';
+import { BookOpen, ChevronLeft, ChevronRight, Clock, Eye, MapPin, Search, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import { BookOpen, MapPin, DollarSign, Clock, Search, Filter, Eye } from 'lucide-react';
+import api from '../api/axiosInstance';
 
 const Tuitions = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [tuitions, setTuitions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    pages: 1
+  });
 
-  // Mock data - replace with actual API call
-  const tuitions = [
-    {
-      id: 1,
-      title: 'Class 9-10 Mathematics Tuition',
-      subject: 'Mathematics',
-      class: '9-10',
-      location: 'Dhanmondi, Dhaka',
-      budget: '5000-7000',
-      schedule: 'Saturday & Sunday, 4 PM - 6 PM',
-      postedDate: '2 days ago',
-    },
-    {
-      id: 2,
-      title: 'Physics Tutor Needed',
-      subject: 'Physics',
-      class: '11-12',
-      location: 'Gulshan, Dhaka',
-      budget: '8000-10000',
-      schedule: 'Monday, Wednesday, Friday, 5 PM - 7 PM',
-      postedDate: '5 days ago',
-    },
-    {
-      id: 3,
-      title: 'English Language Tuition',
-      subject: 'English',
-      class: '6-8',
-      location: 'Uttara, Dhaka',
-      budget: '4000-6000',
-      schedule: 'Thursday & Saturday, 3 PM - 5 PM',
-      postedDate: '1 week ago',
-    },
-  ];
+  const [queryParams, setQueryParams] = useState({
+    search: '',
+    subject: '',
+    class: '',
+    location: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+    page: 1
+  });
 
-  const filteredTuitions = tuitions.filter((tuition) =>
-    tuition.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tuition.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tuition.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchTuitions();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [queryParams.page, queryParams.sortBy, queryParams.sortOrder, queryParams.subject, queryParams.class]);
+
+  const fetchTuitions = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (queryParams.search) params.append('search', queryParams.search);
+      if (queryParams.subject) params.append('subject', queryParams.subject);
+      if (queryParams.class) params.append('class', queryParams.class);
+      if (queryParams.location) params.append('location', queryParams.location);
+      params.append('sortBy', queryParams.sortBy);
+      params.append('sortOrder', queryParams.sortOrder);
+      params.append('page', queryParams.page);
+      params.append('limit', pagination.limit);
+      params.append('status', 'approved');
+
+      const { data } = await api.get(`/api/tuitions?${params.toString()}`);
+      setTuitions(data.tuitions || []);
+      setPagination(data.pagination || pagination);
+    } catch (error) {
+      console.error('Error fetching tuitions:', error);
+      toast.error('Failed to load tuitions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setQueryParams(prev => ({ ...prev, page: 1 }));
+    fetchTuitions();
+  };
+
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const posted = new Date(date);
+    const diffInSeconds = Math.floor((now - posted) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return `${Math.floor(diffInSeconds / 604800)}w ago`;
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      setQueryParams(prev => ({ ...prev, page: newPage }));
+    }
+  };
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="container mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-            <BookOpen className="text-primary" size={40} />
+    <div className="min-h-screen py-12 px-4 bg-base-100 font-sans">
+      <div className="container mx-auto max-w-7xl">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
             Available Tuitions
           </h1>
-          <p className="text-base-content/70 text-lg">
-            Browse and apply to tuition posts from students across the platform
+          <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
+            Find the perfect teaching opportunity. Filter by subject, class, or location to get started.
           </p>
         </div>
 
-        {/* Search and Filter */}
-        <div className="mb-8 bg-base-200 p-6 rounded-lg">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
-              <input
-                type="text"
-                placeholder="Search by subject, class, or location..."
-                className="input input-bordered w-full pl-10 bg-base-100"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-primary">
-              <Filter size={20} />
-              Filter
-            </button>
-          </div>
-        </div>
+        {/* Search & Advanced Filters */}
+        <div className="card bg-base-200 shadow-2xl mb-12 border border-base-300">
+          <div className="card-body p-6 md:p-8">
+            <form onSubmit={handleSearch} className="flex flex-col lg:flex-row gap-4 mb-8">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50" size={24} />
+                <input
+                  type="text"
+                  placeholder="Search by subject, title or location..."
+                  className="input input-bordered w-full pl-14 h-16 bg-base-100 focus:border-primary transition-all text-lg shadow-inner"
+                  value={queryParams.search}
+                  onChange={(e) => setQueryParams({ ...queryParams, search: e.target.value })}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary h-16 px-12 rounded-2xl text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                Search Now
+              </button>
+            </form>
 
-        {/* Tuitions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTuitions.map((tuition) => (
-            <div key={tuition.id} className="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-              <div className="card-body">
-                <h2 className="card-title text-primary">{tuition.title}</h2>
-                <div className="space-y-2 mt-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <BookOpen size={16} className="text-base-content/50" />
-                    <span className="font-semibold">Class:</span>
-                    <span>{tuition.class}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin size={16} className="text-base-content/50" />
-                    <span>{tuition.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign size={16} className="text-base-content/50" />
-                    <span className="font-semibold">Budget:</span>
-                    <span>৳{tuition.budget}/month</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock size={16} className="text-base-content/50" />
-                    <span>{tuition.schedule}</span>
-                  </div>
-                </div>
-                <div className="card-actions justify-between items-center mt-4">
-                  <span className="text-xs text-base-content/50">{tuition.postedDate}</span>
-                  <div className="flex gap-2">
-                    <Link
-                      to={`/tuitions/${tuition.id}`}
-                      className="btn btn-ghost btn-sm"
-                    >
-                      <Eye size={16} />
-                      View Details
-                    </Link>
-                    <Link
-                      to={`/tuitions/${tuition.id}`}
-                      className="btn btn-primary btn-sm"
-                    >
-                      Apply Now
-                    </Link>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="form-control">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text flex items-center gap-2 opacity-60 uppercase text-[10px] tracking-widest font-bold">
+                    <SlidersHorizontal size={12} /> Subject
+                  </span>
+                </label>
+                <select
+                  className="select select-bordered select-md bg-base-100 h-12"
+                  value={queryParams.subject}
+                  onChange={(e) => setQueryParams({ ...queryParams, subject: e.target.value, page: 1 })}
+                >
+                  <option value="">All Subjects</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="English">English</option>
+                  <option value="Biology">Biology</option>
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text opacity-60 uppercase text-[10px] tracking-widest font-bold">Class Level</span>
+                </label>
+                <select
+                  className="select select-bordered select-md bg-base-100 h-12"
+                  value={queryParams.class}
+                  onChange={(e) => setQueryParams({ ...queryParams, class: e.target.value, page: 1 })}
+                >
+                  <option value="">All Classes</option>
+                  <option value="Primary">Primary (1-5)</option>
+                  <option value="Secondary">Secondary (6-10)</option>
+                  <option value="HSC">HSC (11-12)</option>
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text opacity-60 uppercase text-[10px] tracking-widest font-bold">Sort Results</span>
+                </label>
+                <select
+                  className="select select-bordered select-md bg-base-100 h-12"
+                  value={queryParams.sortBy}
+                  onChange={(e) => setQueryParams({ ...queryParams, sortBy: e.target.value, page: 1 })}
+                >
+                  <option value="createdAt">Date Posted</option>
+                  <option value="budget">Salary (Budget)</option>
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text opacity-60 uppercase text-[10px] tracking-widest font-bold">Sort Order</span>
+                </label>
+                <select
+                  className="select select-bordered select-md bg-base-100 h-12"
+                  value={queryParams.sortOrder}
+                  onChange={(e) => setQueryParams({ ...queryParams, sortOrder: e.target.value, page: 1 })}
+                >
+                  <option value="desc">Newest/Highest First</option>
+                  <option value="asc">Oldest/Lowest First</option>
+                </select>
               </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        {filteredTuitions.length === 0 && (
-          <div className="text-center py-12">
-            <img 
-              src="/App-Error.png" 
-              alt="No tuitions found" 
-              className="w-full max-w-md mx-auto mb-6"
-            />
-            <p className="text-lg text-base-content/70">No tuitions found matching your search.</p>
+        {/* Content Section */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card bg-base-200 h-[360px] animate-pulse rounded-3xl"></div>
+            ))}
           </div>
+        ) : (
+          <>
+            {tuitions.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {tuitions.map((tuition) => (
+                  <div key={tuition._id} className="card bg-base-200 border border-base-300 hover:border-primary transition-all duration-500 group shadow-lg hover:shadow-2xl rounded-3xl overflow-hidden translate-y-0 hover:-translate-y-2">
+                    <div className="card-body p-8">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="badge badge-primary bg-primary/10 border-primary/20 text-primary px-4 py-4 font-bold rounded-xl">{tuition.subject}</div>
+                        <div className="flex items-center gap-1.5 text-xs opacity-40 font-medium">
+                          <Clock size={14} />
+                          {getTimeAgo(tuition.createdAt)}
+                        </div>
+                      </div>
+                      
+                      <h2 className="card-title text-2xl font-bold mb-4 group-hover:text-primary transition-colors leading-tight min-h-[64px] line-clamp-2">
+                        {tuition.title || `${tuition.subject} Tutor needed for Class ${tuition.class}`}
+                      </h2>
+
+                      <div className="space-y-4 mb-8">
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="w-10 h-10 rounded-2xl bg-base-100 text-primary flex items-center justify-center shadow-sm">
+                            <BookOpen size={18} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Grade</p>
+                            <span className="font-bold">{tuition.class}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="w-10 h-10 rounded-2xl bg-base-100 text-primary flex items-center justify-center shadow-sm">
+                            <MapPin size={18} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Location</p>
+                            <span className="font-bold truncate max-w-[180px] block">{tuition.location}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-end justify-between pt-6 border-t border-base-300/50">
+                        <div>
+                          <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Monthly Budget</p>
+                          <span className="text-2xl font-black text-primary">৳{tuition.budget}</span>
+                        </div>
+                        <Link to={`/tuitions/${tuition._id}`} className="btn btn-circle btn-primary shadow-lg shadow-primary/20 group-hover:scale-110 active:scale-90 transition-all">
+                          <Eye size={20} />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-24 bg-base-200 rounded-[40px] border-2 border-dashed border-base-300">
+                <Search className="mx-auto text-base-content/10 mb-8" size={120} />
+                <h3 className="text-3xl font-black mb-3">No Results Found</h3>
+                <p className="text-base-content/60 max-w-sm mx-auto">We couldn't find any tuition posts matching those exact filters. Try broadening your criteria!</p>
+                <button 
+                  onClick={() => setQueryParams({ search: '', subject: '', class: '', location: '', sortBy: 'createdAt', sortOrder: 'desc', page: 1 })}
+                  className="btn btn-primary btn-lg mt-10 rounded-full px-12 shadow-xl shadow-primary/30"
+                >
+                  Reset Everything
+                </button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="flex justify-center mt-20">
+                <div className="join bg-base-300 p-1.5 rounded-3xl shadow-xl border border-base-300">
+                  <button 
+                    className="join-item btn btn-ghost rounded-2xl w-14 h-14"
+                    disabled={queryParams.page === 1}
+                    onClick={() => handlePageChange(queryParams.page - 1)}
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  
+                  {[...Array(pagination.pages)].map((_, i) => (
+                    <button
+                      key={i}
+                      className={`join-item btn rounded-2xl w-14 h-14 font-black transition-all ${queryParams.page === i + 1 ? 'btn-primary shadow-lg shadow-primary/20 scale-105' : 'btn-ghost'}`}
+                      onClick={() => handlePageChange(i + 1)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button 
+                    className="join-item btn btn-ghost rounded-2xl w-14 h-14"
+                    disabled={queryParams.page === pagination.pages}
+                    onClick={() => handlePageChange(queryParams.page + 1)}
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
