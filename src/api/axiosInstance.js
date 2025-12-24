@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base URL from env or fallback to local dev server
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || 'https://etuitionbd-by-milon.vercel.app/',
 });
 
 // Attach JWT token from localStorage if available
