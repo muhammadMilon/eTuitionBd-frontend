@@ -33,10 +33,15 @@ import PostNewTuition from './pages/dashboards/PostNewTuition';
 
 // Tutor Dashboard Pages
 import MyApplications from './pages/dashboards/MyApplications';
-import TutorOngoingTuitions from './pages/dashboards/TutorOngoingTuitions';
 import RevenueHistory from './pages/dashboards/RevenueHistory';
+import TutorOngoingTuitions from './pages/dashboards/TutorOngoingTuitions';
 
 // Admin Dashboard Pages
+import ContactManagement from './pages/dashboards/ContactManagement';
+import Messages from './pages/dashboards/Messages';
+import MyBookmarks from './pages/dashboards/MyBookmarks';
+import MySchedule from './pages/dashboards/MySchedule';
+import Notifications from './pages/dashboards/Notifications';
 import TuitionManagement from './pages/dashboards/TuitionManagement';
 import UserManagement from './pages/dashboards/UserManagement';
 
@@ -110,9 +115,14 @@ function App() {
               {/* Admin Routes */}
               <Route path="users" element={<UserManagement />} />
               <Route path="tuition-management" element={<TuitionManagement />} />
+              <Route path="contact-messages" element={<ContactManagement />} />
               
               <Route path="payments" element={<PaymentHistory />} />
               <Route path="profile" element={<ProfileSettings />} />
+              <Route path="bookmarks" element={<MyBookmarks />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="schedule" element={<MySchedule />} />
             </Route>
 
             {/* Catch all - show 404 page */}

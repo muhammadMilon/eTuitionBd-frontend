@@ -1,12 +1,15 @@
-import { BookOpen, ChevronLeft, ChevronRight, Clock, Eye, MapPin, Search, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Clock, Eye, Heart, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const Tuitions = () => {
+  const { currentUser } = useAuth();
   const [tuitions, setTuitions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookmarkedIds, setBookmarkedIds] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 12,
@@ -26,8 +29,11 @@ const Tuitions = () => {
 
   useEffect(() => {
     fetchTuitions();
+    if (currentUser) {
+      fetchUserBookmarks();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [queryParams.page, queryParams.sortBy, queryParams.sortOrder, queryParams.subject, queryParams.class]);
+  }, [queryParams.page, queryParams.sortBy, queryParams.sortOrder, queryParams.subject, queryParams.class, currentUser]);
 
   const fetchTuitions = async () => {
     try {
@@ -51,6 +57,42 @@ const Tuitions = () => {
       toast.error('Failed to load tuitions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserBookmarks = async () => {
+    try {
+      const { data } = await api.get('/api/auth/me');
+      if (data?.user) {
+        setBookmarkedIds(data.user.bookmarkedTuitions || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user bookmarks:', error);
+    }
+  };
+
+  const handleToggleBookmark = async (e, tuitionId) => {
+    e.preventDefault(); // Prevent navigating to details if button is clicked
+    if (!currentUser) {
+      toast.error('Please login to bookmark tuitions');
+      return;
+    }
+
+    try {
+      const { data } = await api.post('/api/users/bookmarks/toggle', {
+        targetId: tuitionId,
+        targetType: 'tuition'
+      });
+
+      if (data.isBookmarked) {
+        setBookmarkedIds(prev => [...prev, tuitionId]);
+        toast.success('Tuition bookmarked');
+      } else {
+        setBookmarkedIds(prev => prev.filter(id => id !== tuitionId));
+        toast.success('Bookmark removed');
+      }
+    } catch (error) {
+      toast.error('Failed to update bookmark');
     }
   };
 
@@ -173,6 +215,19 @@ const Tuitions = () => {
                   <option value="asc">Oldest/Lowest First</option>
                 </select>
               </div>
+
+              <div className="form-control">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text opacity-60 uppercase text-[10px] tracking-widest font-bold">Location</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dhaka, Chittagong"
+                  className="input input-bordered input-md bg-base-100 h-12"
+                  value={queryParams.location}
+                  onChange={(e) => setQueryParams({ ...queryParams, location: e.target.value, page: 1 })}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -193,9 +248,22 @@ const Tuitions = () => {
                     <div className="card-body p-8">
                       <div className="flex justify-between items-start mb-6">
                         <div className="badge badge-primary bg-primary/10 border-primary/20 text-primary px-4 py-4 font-bold rounded-xl">{tuition.subject}</div>
-                        <div className="flex items-center gap-1.5 text-xs opacity-40 font-medium">
-                          <Clock size={14} />
-                          {getTimeAgo(tuition.createdAt)}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 text-xs opacity-40 font-medium">
+                            <Clock size={14} />
+                            {getTimeAgo(tuition.createdAt)}
+                          </div>
+                          {currentUser && (
+                            <button 
+                              onClick={(e) => handleToggleBookmark(e, tuition._id)}
+                              className="btn btn-ghost btn-circle btn-xs hover:bg-transparent"
+                            >
+                              <Heart 
+                                size={18} 
+                                className={`${bookmarkedIds.includes(tuition._id) ? 'fill-error text-error' : 'text-base-content/30'} transition-colors`} 
+                              />
+                            </button>
+                          )}
                         </div>
                       </div>
                       

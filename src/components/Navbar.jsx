@@ -1,17 +1,40 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Bell, BookOpen, Calendar, Heart, Home, Info, LayoutDashboard, LogOut, Mail, Menu, MessageSquare, User, Users, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import api from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, User, LogOut, Home, BookOpen, Users, Info, Mail, LayoutDashboard } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { currentUser, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const dropdownRef = useRef(null);
   
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
   // Check if user is authenticated (either Firebase user or has token)
   const isAuthenticated = currentUser || (typeof window !== 'undefined' && localStorage.getItem('etuitionbd_token'));
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, location.pathname]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const { data } = await api.get('/api/notifications');
+      const unread = data.notifications?.filter(n => !n.isRead).length || 0;
+      setUnreadNotifications(unread);
+    } catch (error) {
+      console.error('Error fetching unread notifications:', error);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -78,15 +101,29 @@ const Navbar = () => {
         {/* Auth Navigation - Desktop */}
         <div className="flex-none hidden lg:flex items-center gap-2 ml-4">
           {loading ? null : isAuthenticated ? (
-            <div className="dropdown dropdown-end" ref={dropdownRef}>
-              <label
-                tabIndex={0}
-                className="btn btn-ghost btn-circle avatar"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-              >
+            <div className="flex items-center gap-4">
+              <Link to="/dashboard/notifications" className="btn btn-ghost btn-circle relative">
+                <Bell size={24} />
+                {unreadNotifications > 0 && (
+                  <span className="badge badge-primary badge-sm absolute top-0 right-0">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </Link>
+              <div className="dropdown dropdown-end" ref={dropdownRef}>
+                <label
+                  tabIndex={0}
+                  className="btn btn-ghost btn-circle avatar"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
                 {currentUser?.photoURL || currentUser?.photoUrl ? (
                   <div className="w-10 rounded-full">
-                    <img src={currentUser.photoURL || currentUser.photoUrl} alt={currentUser.displayName || currentUser.name || 'User'} className="w-full h-full rounded-full object-cover" />
+                    <img 
+                      src={currentUser.photoURL || currentUser.photoUrl} 
+                      alt={currentUser.displayName || currentUser.name || 'User'} 
+                      className="w-full h-full rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                 ) : (
                   <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
@@ -124,6 +161,36 @@ const Navbar = () => {
                     </Link>
                   </li>
                   <li>
+                    <Link
+                      to="/dashboard/bookmarks"
+                      className="flex items-center gap-2"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <Heart size={18} />
+                      Bookmarks
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/dashboard/messages"
+                      className="flex items-center gap-2"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <MessageSquare size={18} />
+                      Messages
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/dashboard/schedule"
+                      className="flex items-center gap-2"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <Calendar size={18} />
+                      My Schedule
+                    </Link>
+                  </li>
+                  <li>
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 text-error"
@@ -134,6 +201,7 @@ const Navbar = () => {
                   </li>
                 </ul>
               )}
+            </div>
             </div>
           ) : (
             <div className="flex gap-2">
@@ -188,12 +256,55 @@ const Navbar = () => {
                 </li>
                 <li>
                   <Link
+                    to="/dashboard/notifications"
+                    className="flex items-center gap-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Bell size={18} />
+                    Notifications
+                    {unreadNotifications > 0 && (
+                      <span className="badge badge-primary badge-sm ml-auto">{unreadNotifications}</span>
+                    )}
+                  </Link>
+                </li>
+                <li>
+                    <Link
+                      to="/dashboard/messages"
+                      className="flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <MessageSquare size={18} />
+                      Messages
+                    </Link>
+                  </li>
+                <li>
+                    <Link
+                      to="/dashboard/schedule"
+                      className="flex items-center gap-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Calendar size={18} />
+                      My Schedule
+                    </Link>
+                  </li>
+                <li>
+                  <Link
                     to="/dashboard/profile"
                     className="flex items-center gap-2"
                     onClick={() => setIsOpen(false)}
                   >
                     <User size={18} />
                     Profile
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/dashboard/bookmarks"
+                    className="flex items-center gap-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Heart size={18} />
+                    Bookmarks
                   </Link>
                 </li>
                 <li>

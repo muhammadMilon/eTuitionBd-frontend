@@ -45,13 +45,13 @@ export const AuthProvider = ({ children }) => {
   // Helper to set auth user manually (used after backend registration/login)
   const setAuthUser = (user) => {
     if (user) {
-      // Normalize backend user to match Firebase user structure
+      // Normalize backend user (has photoUrl) to match mixed structure
       const normalizedUser = {
         ...user,
         uid: user.uid || user._id, // Ensure uid is set
         email: user.email,
         displayName: user.name || user.displayName || user.email?.split('@')[0],
-        photoURL: user.photoUrl || user.photoURL,
+        photoURL: user.photoUrl || user.photoURL || '',
         address: user.address || '',
         phone: user.phone || '',
       };
@@ -71,34 +71,42 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Sync Firebase user with backend (create/update user + get JWT & role)
-  const syncWithBackend = async (firebaseUser, role) => {
+  const syncWithBackend = async (firebaseUser, role, phone) => {
     if (!firebaseUser) return;
+
+    // Get robust photo URL (checking providerData specifically for social logins)
+    const photoUrl = firebaseUser.photoURL || firebaseUser.providerData?.[0]?.photoURL || '';
 
     const body = {
       uid: firebaseUser.uid,
       email: firebaseUser.email,
       name: firebaseUser.displayName || firebaseUser.email?.split('@')[0],
       role: role || getUserRole(firebaseUser.uid) || 'student',
-      photoUrl: firebaseUser.photoURL || '',
-      phone: firebaseUser.phoneNumber || '',
+      photoUrl: photoUrl,
+      phone: phone || firebaseUser.phoneNumber || '',
     };
 
-    const { data } = await api.post('/api/auth/register', body);
+    try {
+      const { data } = await api.post('/api/auth/register', body);
 
-    if (data?.token) {
-      saveToken(data.token);
+      if (data?.token) {
+        saveToken(data.token);
+      }
+
+      if (data?.user?.role) {
+        saveUserRole(firebaseUser.uid, data.user.role);
+      } else {
+        saveUserRole(firebaseUser.uid, body.role);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Sync error details:', error.response?.data || error.message);
+      throw error;
     }
-
-    if (data?.user?.role) {
-      saveUserRole(firebaseUser.uid, data.user.role);
-    } else {
-      saveUserRole(firebaseUser.uid, body.role);
-    }
-
-    return data;
   };
 
-  const signup = async (email, password, name, role = 'student') => {
+  const signup = async (email, password, name, role = 'student', phone) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     if (name) {
@@ -106,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Create / update profile in backend + get JWT & role
-    await syncWithBackend(userCredential.user, role);
+    await syncWithBackend(userCredential.user, role, phone);
 
     return userCredential;
   };
@@ -150,6 +158,7 @@ export const AuthProvider = ({ children }) => {
       if (user) {
         // Firebase user detected. Check if we have a valid token first
         const token = localStorage.getItem('etuitionbd_token');
+        const firebasePhotoUrl = user.photoURL || user.providerData?.[0]?.photoURL || '';
         
         if (token) {
           // We have a token, verify it first
@@ -159,9 +168,10 @@ export const AuthProvider = ({ children }) => {
               // Token is valid, use backend user data
               const normalizedUser = {
                 ...data.user,
-                ...user, // Keep firebase properties (uid, email, metadata)
+                uid: data.user.uid || user.uid,
+                email: data.user.email || user.email,
                 displayName: data.user.name || user.displayName,
-                photoURL: data.user.photoUrl || user.photoURL,
+                photoURL: data.user.photoUrl || firebasePhotoUrl,
                 address: data.user.address || '',
                 phone: data.user.phone || '',
               };
@@ -189,9 +199,10 @@ export const AuthProvider = ({ children }) => {
           if (syncData?.user) {
             const normalizedUser = {
               ...syncData.user,
-              ...user,
+              uid: syncData.user.uid || user.uid,
+              email: syncData.user.email || user.email,
               displayName: syncData.user.name || user.displayName,
-              photoURL: syncData.user.photoUrl || user.photoURL,
+              photoURL: syncData.user.photoUrl || firebasePhotoUrl,
               address: syncData.user.address || '',
               phone: syncData.user.phone || '',
             };

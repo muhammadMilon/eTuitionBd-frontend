@@ -2,7 +2,14 @@ import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, CheckCircle, Clock, DollarSign, GraduationCap, MapPin, Shield, User, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import api from '../api/axiosInstance';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const Home = () => {
   const [latestTuitions, setLatestTuitions] = useState([]);
@@ -72,70 +79,208 @@ const Home = () => {
     }
   };
 
+  const heroSlides = [
+    {
+      title: "Find Your Perfect Tutor Today",
+      description: "Connect with qualified tutors for personalized learning experiences. The most trusted platform in Bangladesh.",
+      image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1000&q=80",
+      ctaText: "Browse Tuitions",
+      ctaLink: "/tuitions",
+      secondaryText: "Become a Tutor",
+      secondaryLink: "/register"
+    },
+    {
+      title: "Study Smarter, Not Harder",
+      description: "Master any subject with our expert tutors. Choose between flexible online or offline sessions.",
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1000&q=80",
+      ctaText: "Find Tutors",
+      ctaLink: "/tuitions",
+      secondaryText: "View Subjects",
+      secondaryLink: "/tuitions"
+    },
+    {
+      title: "Expert Learning Community",
+      description: "Join thousands of students and share the journey of knowledge with certified educators.",
+      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1000&q=80",
+      ctaText: "Join Now",
+      ctaLink: "/register",
+      secondaryText: "How it Works",
+      secondaryLink: "#how-it-works"
+    },
+    {
+      title: "Share Your Knowledge",
+      description: "Help students reach their full potential. Start your teaching journey as a verified tutor today.",
+      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=1000&q=80",
+      ctaText: "Get Started",
+      ctaLink: "/register",
+      secondaryText: "Tutor Benefits",
+      secondaryLink: "#why-choose-us"
+    }
+  ];
+
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="hero min-h-[90vh] bg-base-200 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]"></div>
-        <div className="hero-content text-center z-10">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-            >
-              <h1 className="mb-6 text-5xl md:text-7xl font-bold leading-tight">
-                Find Your Perfect <br/>
-                <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                  Tutor Today
-                </span>
-              </h1>
-              <p className="mb-8 text-xl text-base-content/80 max-w-2xl mx-auto">
-                Connect with qualified tutors or find tuition jobs easily. 
-                The most trusted platform for education needs in Bangladesh.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex gap-4 justify-center flex-wrap"
-            >
-              <Link to="/tuitions" className="btn btn-primary btn-lg shadow-lg hover:shadow-primary/30 transition-all">
-                Browse Tuitions <ArrowRight size={20} />
-              </Link>
-              <Link to="/register" className="btn btn-outline btn-lg hover:bg-base-content/5">
-                Become a Tutor
-              </Link>
-            </motion.div>
+      {/* Hero Section with Swiper */}
+      <section className="relative overflow-hidden bg-base-200">
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]"></div>
+        
+        <Swiper
+          modules={[Autoplay, Pagination, Navigation]}
+          speed={800}
+          loop={true}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+          }}
+          pagination={{
+            clickable: true,
+            el: '.custom-pagination',
+          }}
+          navigation={{
+            nextEl: '.swiper-button-next-custom',
+            prevEl: '.swiper-button-prev-custom',
+          }}
+          className="w-full h-full"
+        >
+          {heroSlides.map((slide, index) => (
+            <SwiperSlide key={index}>
+              <div className="min-h-[80vh] sm:min-h-[85vh] lg:min-h-[75vh] xl:min-h-[85vh] 2xl:min-h-[80vh] w-full flex items-center">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-20 lg:py-16 xl:py-24 2xl:py-32">
+                  <div className="flex flex-col lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16 xl:gap-24">
+                    {/* Content Section */}
+                    <div className="w-full lg:w-1/2 order-2 lg:order-1 text-center lg:text-left">
+                      <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="space-y-5 sm:space-y-6 md:space-y-8"
+                      >
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">
+                          Premium Tutor Network
+                        </span>
+                        
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black leading-[1.1] text-base-content tracking-tight">
+                          {slide.title.split(' ').map((word, i) => (
+                            <span key={i} className={i >= slide.title.split(' ').length - 2 ? "text-primary" : ""}>
+                              {word}{' '}
+                            </span>
+                          ))}
+                        </h1>
+                        
+                        <p className="text-base sm:text-lg md:text-xl text-base-content/70 max-w-xl lg:max-w-md xl:max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                          {slide.description}
+                        </p>
+                        
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-4 pt-2 sm:pt-4">
+                          <Link to={slide.ctaLink} className="btn btn-primary btn-md md:btn-lg px-6 sm:px-8 xl:px-10 rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+                            {slide.ctaText} <ArrowRight className="ml-2" size={20} />
+                          </Link>
+                          <a href={slide.secondaryLink} className="btn btn-ghost btn-md md:btn-lg px-6 sm:px-8 xl:px-10 rounded-2xl border-2 border-base-content/10 hover:bg-base-content/5">
+                            {slide.secondaryText}
+                          </a>
+                        </div>
 
-            {/* Stats */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-8 border-t border-base-content/10"
-            >
-              {[
-                { label: 'Active Tutors', value: '500+' },
-                { label: 'Happy Students', value: '1200+' },
-                { label: 'Subjects', value: '50+' },
-                { label: 'Districts', value: '64' },
-              ].map((stat, idx) => (
-                <div key={idx}>
-                  <h3 className="text-3xl font-bold text-primary">{stat.value}</h3>
-                  <p className="text-sm font-medium opacity-70">{stat.label}</p>
+                        {/* Stats Info */}
+                        <div className="flex items-center justify-center lg:justify-start gap-6 sm:gap-10 pt-8 sm:pt-10 border-t border-base-content/10 w-fit mx-auto lg:mx-0">
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <div className="text-2xl sm:text-3xl font-black text-primary">500+</div>
+                            <div className="text-[9px] sm:text-[10px] font-bold opacity-50 uppercase tracking-widest">Expert Tutors</div>
+                          </div>
+                          <div className="w-px h-8 sm:h-10 bg-base-content/10"></div>
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <div className="text-2xl sm:text-3xl font-black text-primary">1200+</div>
+                            <div className="text-[9px] sm:text-[10px] font-bold opacity-50 uppercase tracking-widest">Happy Students</div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    {/* Image Section */}
+                    <div className="w-full sm:w-4/5 md:w-2/3 lg:w-1/2 order-1 lg:order-2">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9, x: 50 }}
+                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="relative mx-auto lg:ml-auto max-w-[300px] sm:max-w-[400px] md:max-w-[450px] lg:max-w-none"
+                      >
+                        {/* Blob Background */}
+                        <div className="absolute -inset-4 sm:-inset-6 bg-primary/20 blur-2xl sm:blur-3xl rounded-full opacity-50 animate-pulse"></div>
+                        
+                        <div className="aspect-square relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 bg-base-300 group">
+                          <img 
+                            src={slide.image} 
+                            alt={slide.title}
+                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[2s]"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent opacity-60"></div>
+                        </div>
+                        
+                        {/* Floating elements */}
+                        <motion.div
+                          animate={{ y: [0, -12, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute -top-4 sm:-top-6 -right-4 sm:-right-6 bg-base-100/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/10 hidden sm:block"
+                        >
+                          <div className="text-center">
+                            <div className="bg-success/20 p-1.5 sm:p-2 rounded-xl mb-1 sm:mb-2 inline-block">
+                              <CheckCircle className="text-success" size={20} />
+                            </div>
+                            <div className="text-[9px] sm:text-xs font-black tracking-tighter">VERIFIED<br/>TUTORS</div>
+                          </div>
+                        </motion.div>
+
+                        <motion.div
+                          animate={{ y: [0, 12, 0] }}
+                          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                          className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-primary p-3 sm:p-4 px-4 sm:px-6 rounded-2xl sm:rounded-3xl shadow-2xl text-white hidden sm:flex items-center gap-2 sm:gap-3"
+                        >
+                          <div className="bg-white/20 p-1 sm:p-1.5 rounded-lg">
+                            <Shield size={16} />
+                          </div>
+                          <div className="text-left font-black tracking-tight leading-none text-[10px] sm:text-sm uppercase">
+                            Secure<br/>Platform
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
+              </div>
+            </SwiperSlide>
+          ))}
+          
+          {/* Custom Controls */}
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex items-center gap-8">
+            <button className="swiper-button-prev-custom p-3 rounded-full bg-base-100/50 backdrop-blur-md border border-white/10 text-base-content hover:bg-primary hover:text-white transition-all">
+              <ArrowRight className="rotate-180" size={20} />
+            </button>
+            <div className="custom-pagination !static flex gap-2"></div>
+            <button className="swiper-button-next-custom p-3 rounded-full bg-base-100/50 backdrop-blur-md border border-white/10 text-base-content hover:bg-primary hover:text-white transition-all">
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        </Swiper>
+
+        <style dangerouslySetInnerHTML={{ __html: `
+          .custom-pagination .swiper-pagination-bullet {
+            width: 12px;
+            height: 6px;
+            border-radius: 4px;
+            background: currentColor;
+            opacity: 0.2;
+            transition: all 0.3s ease;
+            margin: 0 !important;
+          }
+          .custom-pagination .swiper-pagination-bullet-active {
+            width: 30px;
+            opacity: 1;
+            background: var(--p) !important;
+          }
+          .hero-swiper .swiper-button-disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+          }
+        `}} />
       </section>
 
       {/* Latest Tuitions Section - Dynamic */}
@@ -250,7 +395,7 @@ const Home = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 px-4 bg-slate-950 text-white relative overflow-hidden">
+      <section id="how-it-works" className="py-24 px-4 bg-slate-950 text-white relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="container mx-auto relative z-10">
           <motion.div 
@@ -309,7 +454,7 @@ const Home = () => {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-24 px-4 bg-base-100">
+      <section id="why-choose-us" className="py-24 px-4 bg-base-100 scroll-mt-20">
         <div className="container mx-auto">
           <SectionHeader title="Why Choose eTuitionBd?" />
           <motion.div 

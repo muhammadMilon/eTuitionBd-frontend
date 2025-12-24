@@ -1,4 +1,4 @@
-import { BookOpen, DollarSign, GraduationCap, LayoutDashboard, LogOut, Menu, Settings, Shield, User, Users } from 'lucide-react';
+import { Bell, BookOpen, Calendar, DollarSign, Heart, LayoutDashboard, LogOut, Mail, Menu, MessageSquare, User, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +32,11 @@ const DashboardLayout = () => {
         { path: '/dashboard/users', label: 'User Management', icon: Users },
         { path: '/dashboard/tuition-management', label: 'Tuition Management', icon: BookOpen },
         { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
+        { path: '/dashboard/bookmarks', label: 'Bookmarks', icon: Heart },
+        { path: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+        { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+        { path: '/dashboard/contact-messages', label: 'Contact Messages', icon: Mail },
+        { path: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     } else if (userRole === 'tutor') {
@@ -40,6 +45,10 @@ const DashboardLayout = () => {
         { path: '/dashboard/my-applications', label: 'My Applications', icon: BookOpen },
         { path: '/dashboard/ongoing-tuitions', label: 'Ongoing Tuitions', icon: BookOpen },
         { path: '/dashboard/payments', label: 'Revenue History', icon: DollarSign },
+        { path: '/dashboard/bookmarks', label: 'Bookmarks', icon: Heart },
+        { path: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+        { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+        { path: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     } else {
@@ -50,6 +59,10 @@ const DashboardLayout = () => {
         { path: '/dashboard/tutors', label: 'Find Tutors', icon: Users },
         { path: '/dashboard/applications', label: 'Applications', icon: BookOpen },
         { path: '/dashboard/payments', label: 'Payment History', icon: DollarSign },
+        { path: '/dashboard/bookmarks', label: 'Bookmarks', icon: Heart },
+        { path: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+        { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+        { path: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
         { path: '/dashboard/profile', label: 'Profile', icon: User },
       ];
     }

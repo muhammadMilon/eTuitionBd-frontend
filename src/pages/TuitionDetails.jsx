@@ -1,25 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BookOpen,
-  MapPin,
-  DollarSign,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  ArrowLeft,
-  Calendar,
-  GraduationCap,
-  CheckCircle,
-  Send,
-  Users,
-  FileText,
-  AlertCircle,
+    AlertCircle,
+    ArrowLeft,
+    BookOpen,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    FileText,
+    GraduationCap,
+    Mail,
+    MapPin,
+    Phone,
+    Send,
+    User,
+    Users,
+    XCircle,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const TuitionDetails = () => {
   const { id } = useParams();
@@ -29,6 +31,7 @@ const TuitionDetails = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationData, setApplicationData] = useState({
@@ -114,6 +117,45 @@ const TuitionDetails = () => {
       ...applicationData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleApprove = async (applicationId) => {
+    try {
+      setProcessingId(applicationId);
+      // Get application details for payment
+      const { data } = await api.post(`/api/applications/${applicationId}/approve`);
+      
+      // Redirect to checkout page with application details
+      navigate('/dashboard/checkout', {
+        state: {
+          application: data.application,
+          applicationId: applicationId,
+        },
+      });
+    } catch (error) {
+      console.error('Error approving application:', error);
+      toast.error(error.response?.data?.message || 'Failed to approve application');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (applicationId) => {
+    if (!window.confirm('Are you sure you want to reject this application?')) {
+      return;
+    }
+
+    try {
+      setProcessingId(applicationId);
+      await api.post(`/api/applications/${applicationId}/reject`);
+      toast.success('Application rejected');
+      fetchTuitionDetails(); // Refresh list
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject application');
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   if (loading) {
@@ -247,133 +289,176 @@ const TuitionDetails = () => {
               </div>
             </div>
 
-            {/* Application Form Modal */}
-            {showApplicationForm && userRole === 'tutor' && (
-              <div className="card bg-base-200 shadow-xl">
-                <div className="card-body">
-                  <h2 className="card-title mb-4">Apply for This Tuition</h2>
-                  <form onSubmit={handleApplicationSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="label">
-                          <span className="label-text">Name <span className="text-error">*</span></span>
-                        </label>
-                        <input
-                          type="text"
-                          className="input input-bordered w-full bg-base-100"
-                          value={currentUser?.displayName || currentUser?.name || ''}
-                          disabled
-                        />
+            {/* Application Modal */}
+            <AnimatePresence>
+              {showApplicationForm && userRole === 'tutor' && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                  {/* Backdrop */}
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowApplicationForm(false)}
+                    className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                  />
+                  
+                  {/* Modal Content */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="relative w-full max-w-2xl bg-base-100 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] border border-white/5 overflow-hidden"
+                  >
+                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-secondary to-primary"></div>
+                  
+                  <div className="p-6 sm:p-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                          <Send size={24} />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-black tracking-tight">Apply for Tuition</h2>
+                          <p className="text-sm opacity-60">Complete the form to send your application</p>
+                        </div>
                       </div>
-                      <div>
-                        <label className="label">
-                          <span className="label-text">Email <span className="text-error">*</span></span>
-                        </label>
-                        <input
-                          type="email"
-                          className="input input-bordered w-full bg-base-100"
-                          value={currentUser?.email || ''}
-                          disabled
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Qualifications <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="text"
-                        name="qualifications"
-                        placeholder="e.g., BSc in Mathematics, MSc in Physics"
-                        className="input input-bordered w-full bg-base-100"
-                        value={applicationData.qualifications}
-                        onChange={handleApplicationChange}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Experience <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="text"
-                        name="experience"
-                        placeholder="e.g., 5 years of teaching experience"
-                        className="input input-bordered w-full bg-base-100"
-                        value={applicationData.experience}
-                        onChange={handleApplicationChange}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Expected Salary (৳/month) <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="number"
-                        name="expectedSalary"
-                        placeholder="e.g., 6000"
-                        className="input input-bordered w-full bg-base-100"
-                        value={applicationData.expectedSalary}
-                        onChange={handleApplicationChange}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Availability <span className="text-error">*</span></span>
-                      </label>
-                      <input
-                        type="text"
-                        name="availability"
-                        placeholder="e.g., Saturday & Sunday, 4 PM - 6 PM"
-                        className="input input-bordered w-full bg-base-100"
-                        value={applicationData.availability}
-                        onChange={handleApplicationChange}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Message to Student (Optional)</span>
-                      </label>
-                      <textarea
-                        name="message"
-                        className="textarea textarea-bordered w-full h-32 bg-base-100"
-                        placeholder="Introduce yourself and explain why you're a good fit..."
-                        value={applicationData.message}
-                        onChange={handleApplicationChange}
-                      ></textarea>
-                    </div>
-
-                    <div className="card-actions">
-                      <button
-                        type="button"
+                      <button 
                         onClick={() => setShowApplicationForm(false)}
-                        className="btn btn-ghost"
+                        className="btn btn-ghost btn-circle btn-sm hover:bg-base-200"
                       >
-                        Cancel
-                      </button>
-                      <button type="submit" className="btn btn-primary" disabled={submitting}>
-                        {submitting ? (
-                          <span className="loading loading-spinner"></span>
-                        ) : (
-                          <>
-                            <Send size={20} />
-                            Submit Application
-                          </>
-                        )}
+                        <AlertCircle className="rotate-45" size={24} />
                       </button>
                     </div>
-                  </form>
-                </div>
+
+                    <form onSubmit={handleApplicationSubmit} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">My Name</label>
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                            <input
+                              type="text"
+                              className="input input-bordered w-full pl-12 bg-base-200 border-none focus:ring-2 ring-primary/20 pointer-events-none opacity-70"
+                              value={currentUser?.displayName || currentUser?.name || ''}
+                              readOnly
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">My Email</label>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                            <input
+                              type="email"
+                              className="input input-bordered w-full pl-12 bg-base-200 border-none focus:ring-2 ring-primary/20 pointer-events-none opacity-70"
+                              value={currentUser?.email || ''}
+                              readOnly
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">Educational Qualifications <span className="text-primary">*</span></label>
+                        <div className="relative">
+                          <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                          <input
+                            type="text"
+                            name="qualifications"
+                            placeholder="e.g., BSc in Mathematics, MSc in Physics"
+                            className="input input-bordered w-full pl-12 bg-base-200 border-transparent focus:border-primary/30 focus:ring-4 ring-primary/10 transition-all font-medium"
+                            value={applicationData.qualifications}
+                            onChange={handleApplicationChange}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">Teaching Experience <span className="text-primary">*</span></label>
+                        <div className="relative">
+                          <Clock className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                          <input
+                            type="text"
+                            name="experience"
+                            placeholder="e.g., 5 years of teaching experience"
+                            className="input input-bordered w-full pl-12 bg-base-200 border-transparent focus:border-primary/30 focus:ring-4 ring-primary/10 transition-all font-medium"
+                            value={applicationData.experience}
+                            onChange={handleApplicationChange}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">Expected Salary (৳) <span className="text-primary">*</span></label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                            <input
+                              type="number"
+                              name="expectedSalary"
+                              placeholder="e.g., 6000"
+                              className="input input-bordered w-full pl-12 bg-base-200 border-transparent focus:border-primary/30 focus:ring-4 ring-primary/10 transition-all font-medium"
+                              value={applicationData.expectedSalary}
+                              onChange={handleApplicationChange}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">Weekly Availability <span className="text-primary">*</span></label>
+                          <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+                            <input
+                              type="text"
+                              name="availability"
+                              placeholder="e.g., 3 days, 4 PM - 6 PM"
+                              className="input input-bordered w-full pl-12 bg-base-200 border-transparent focus:border-primary/30 focus:ring-4 ring-primary/10 transition-all font-medium"
+                              value={applicationData.availability}
+                              onChange={handleApplicationChange}
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-black uppercase tracking-widest opacity-50 ml-1">Message to Student / Parent</label>
+                        <textarea
+                          name="message"
+                          className="textarea textarea-bordered w-full h-32 bg-base-200 border-transparent focus:border-primary/30 focus:ring-4 ring-primary/10 transition-all font-medium p-4"
+                          placeholder="Introduce yourself and explain why you're a good fit..."
+                          value={applicationData.message}
+                          onChange={handleApplicationChange}
+                        ></textarea>
+                      </div>
+
+                      <div className="flex gap-4 pt-4 sticky bottom-0 bg-base-100 pb-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowApplicationForm(false)}
+                          className="btn btn-ghost flex-1 rounded-2xl"
+                        >
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary flex-[2] rounded-2xl shadow-xl shadow-primary/20" disabled={submitting}>
+                          {submitting ? (
+                            <span className="loading loading-spinner"></span>
+                          ) : (
+                            <>
+                              <Send size={20} />
+                              Submit Application
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </motion.div>
               </div>
             )}
+          </AnimatePresence>
 
             {/* Description */}
             <div className="card bg-base-200 shadow-xl">
@@ -455,12 +540,28 @@ const TuitionDetails = () => {
                           </div>
                           {application.status === 'pending' && (
                             <div className="flex gap-2">
-                              <Link
-                                to={`/dashboard/applications?tuitionId=${tuition._id}`}
+                              <button
+                                onClick={() => handleApprove(application._id)}
                                 className="btn btn-success btn-sm"
+                                disabled={processingId === application._id}
                               >
-                                View
-                              </Link>
+                                {processingId === application._id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  <>
+                                    <CheckCircle size={16} />
+                                    Approve & Pay
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleReject(application._id)}
+                                className="btn btn-error btn-sm btn-outline"
+                                disabled={processingId === application._id}
+                              >
+                                <XCircle size={16} />
+                                Reject
+                              </button>
                             </div>
                           )}
                         </div>

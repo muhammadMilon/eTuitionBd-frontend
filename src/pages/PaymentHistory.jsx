@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
-  DollarSign,
-  Calendar,
-  Filter,
-  Download,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Search,
-  FileText,
-  TrendingUp,
-  TrendingDown,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Download,
+    FileText,
+    Search,
+    TrendingUp,
+    XCircle
 } from 'lucide-react';
-import api from '../api/axiosInstance';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import api from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const PaymentHistory = () => {
   const { userRole } = useAuth();
@@ -37,8 +37,10 @@ const PaymentHistory = () => {
       } else if (userRole === 'tutor') {
         const { data } = await api.get('/api/payments/tutor/revenue');
         setPayments(data.payments || []);
+      } else if (userRole === 'admin') {
+        const { data } = await api.get('/api/payments/admin/all');
+        setPayments(data.payments || []);
       } else {
-        // Admin - would need admin endpoint
         setPayments([]);
       }
     } catch (error) {
@@ -54,7 +56,7 @@ const PaymentHistory = () => {
     return payments.map((payment) => ({
       id: payment._id,
       transactionId: payment.stripePaymentIntentId || payment._id.substring(0, 12).toUpperCase(),
-      type: userRole === 'student' ? 'Payment' : 'Earning',
+      type: userRole === 'admin' ? 'Transaction' : (userRole === 'student' ? 'Payment' : 'Earning'),
       amount: payment.amount || 0,
       tutorName: payment.tutorId?.name,
       studentName: payment.studentId?.name,
@@ -120,13 +122,135 @@ const PaymentHistory = () => {
   };
 
   const handleDownloadInvoice = (transactionId) => {
-    toast.success(`Downloading invoice for ${transactionId}`);
-    // Handle invoice download
+    const payment = paymentData.find((p) => p.transactionId === transactionId);
+    if (!payment) {
+      toast.error('Payment record not found');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+
+      // Add Company Logo/Name
+      doc.setFontSize(22);
+      doc.setTextColor(16, 185, 129); // Emerald-500
+      doc.text('eTuitionBd', 20, 30);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text('Your Trusted Private Tuition Platform', 20, 38);
+
+      // Invoice Header
+      doc.setFontSize(18);
+      doc.setTextColor(0);
+      doc.text('INVOICE', 140, 30);
+
+      doc.setFontSize(10);
+      doc.text(`Invoice No: INV-${payment.transactionId.substring(0, 8).toUpperCase()}`, 140, 40);
+      doc.text(`Date: ${payment.date}`, 140, 45);
+
+      // separator
+      doc.setDrawColor(230);
+      doc.line(20, 55, 190, 55);
+
+      // Bill To/From
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Bill From (Student)', 20, 70);
+      doc.text('Payment To (Tutor)', 110, 70);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(payment.studentName || payment.from || 'N/A', 20, 78);
+      doc.text(payment.tutorName || payment.to || 'N/A', 110, 78);
+
+      // Transaction Details Table
+      autoTable(doc, {
+        startY: 95,
+        head: [['Description', 'Reference', 'Amount']],
+        body: [
+          [
+            `Tuition Payment for ${payment.subject}`,
+            `Ref: ${payment.transactionId}`,
+            `BDT ${payment.amount.toLocaleString()}`,
+          ],
+        ],
+        headStyles: { 
+          fillColor: [16, 185, 129],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: { fillColor: [245, 255, 252] },
+        margin: { left: 20, right: 20 },
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 10;
+
+      // Total
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('Total Amount Paid:', 110, finalY + 10);
+      doc.text(`BDT ${payment.amount.toLocaleString()}`, 160, finalY + 10);
+
+      // Footer
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      const footerY = doc.internal.pageSize.height - 20;
+      doc.text('This is an electronically generated invoice and does not require a signature.', 20, footerY);
+      doc.text('Thank you for using eTuitionBd!', 20, footerY + 5);
+
+      doc.save(`Invoice_${transactionId}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF invoice');
+    }
   };
 
   const handleExport = () => {
-    toast.success('Exporting payment history...');
-    // Handle export functionality
+    if (filteredPayments.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.setTextColor(16, 185, 129);
+      doc.text('eTuitionBd - Payment Report', 20, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 28);
+      doc.text(`Role: ${userRole.toUpperCase()}`, 20, 33);
+      doc.text(`Total Transactions: ${filteredPayments.length}`, 20, 38);
+      doc.text(`Total Amount: BDT ${getTotalAmount().toLocaleString()}`, 20, 43);
+
+      const tableData = filteredPayments.map(p => [
+        p.transactionId.substring(0, 10),
+        p.date,
+        userRole === 'admin' ? `${p.from} to ${p.to}` : (userRole === 'student' ? p.tutorName : p.studentName),
+        p.subject,
+        `BDT ${p.amount.toLocaleString()}`,
+        p.status
+      ]);
+
+      autoTable(doc, {
+        startY: 50,
+        head: [['TXN ID', 'Date', userRole === 'admin' ? 'Participants' : (userRole === 'student' ? 'Tutor' : 'Student'), 'Subject', 'Amount', 'Status']],
+        body: tableData,
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8 },
+      });
+
+      doc.save(`Payment_History_${new Date().getTime()}.pdf`);
+      toast.success('Payment history exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export payment history');
+    }
   };
 
   if (loading) {
@@ -302,7 +426,14 @@ const PaymentHistory = () => {
                       </>
                     )}
                     <td>
-                      <span className="badge badge-outline">{payment.subject}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                        payment.subject.toLowerCase().includes('math') ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                        payment.subject.toLowerCase().includes('data structure') ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                        payment.subject.toLowerCase().includes('physics') ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                        'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      }`}>
+                        {payment.subject}
+                      </span>
                     </td>
                     <td>
                       <span className="font-bold text-primary">৳{payment.amount.toLocaleString()}</span>

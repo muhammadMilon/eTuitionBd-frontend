@@ -1,7 +1,6 @@
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import {
     Bell,
-    Camera,
     GraduationCap,
     Lock,
     Mail,
@@ -158,6 +157,15 @@ const ProfileSettings = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
+    const isEmailUser = auth.currentUser?.providerData.some(
+      (provider) => provider.providerId === 'password'
+    );
+
+    if (!isEmailUser) {
+      toast.error('This account is signed in with Google. Password changes are managed via Google settings.');
+      return;
+    }
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('New passwords do not match');
       return;
@@ -171,12 +179,26 @@ const ProfileSettings = () => {
     setLoading(true);
 
     try {
+      if (!auth.currentUser) {
+        throw new Error('No user is currently signed in.');
+      }
+
       // Re-authenticate user
       const credential = EmailAuthProvider.credential(
-        currentUser.email,
+        auth.currentUser.email,
         passwordData.currentPassword
       );
-      await reauthenticateWithCredential(auth.currentUser, credential);
+      
+      try {
+        await reauthenticateWithCredential(auth.currentUser, credential);
+      } catch (authError) {
+        if (authError.code === 'auth/wrong-password') {
+          throw new Error('Current password you entered is incorrect.');
+        } else if (authError.code === 'auth/too-many-requests') {
+          throw new Error('Too many failed attempts. Please try again later.');
+        }
+        throw authError;
+      }
 
       // Update password
       await updatePassword(auth.currentUser, passwordData.newPassword);
@@ -187,6 +209,7 @@ const ProfileSettings = () => {
         confirmPassword: '',
       });
     } catch (error) {
+      console.error('Password change error:', error);
       toast.error(error.message || 'Failed to change password');
     } finally {
       setLoading(false);
@@ -270,7 +293,12 @@ const ProfileSettings = () => {
                 <div className="flex items-center gap-6 mb-6 pb-6 border-b border-base-300">
                   <div className="w-24 h-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold overflow-hidden">
                     {personalInfo.photoUrl ? (
-                      <img src={personalInfo.photoUrl} alt={personalInfo.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={personalInfo.photoUrl} 
+                        alt={personalInfo.name} 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                      />
                     ) : (
                       personalInfo.name.charAt(0) || currentUser?.email?.charAt(0)
                     )}
@@ -405,74 +433,87 @@ const ProfileSettings = () => {
               <div className="card-body">
                 <h2 className="card-title mb-6">Change Password</h2>
 
-                <form onSubmit={handleChangePassword} className="space-y-4">
-                  <div>
-                    <label className="label">
-                      <span className="label-text">Current Password</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
-                      <input
-                        type="password"
-                        name="currentPassword"
-                        placeholder="Enter current password"
-                        className="input input-bordered w-full pl-10 bg-base-100"
-                        value={passwordData.currentPassword}
-                        onChange={handlePasswordChange}
-                        required
-                      />
+                {auth.currentUser?.providerData.some(p => p.providerId === 'password') ? (
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Current Password</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          placeholder="Enter current password"
+                          className="input input-bordered w-full pl-10 bg-base-100"
+                          value={passwordData.currentPassword}
+                          onChange={handlePasswordChange}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="label">
-                      <span className="label-text">New Password</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
-                      <input
-                        type="password"
-                        name="newPassword"
-                        placeholder="Enter new password (min 6 characters)"
-                        className="input input-bordered w-full pl-10 bg-base-100"
-                        value={passwordData.newPassword}
-                        onChange={handlePasswordChange}
-                        required
-                      />
+                    <div>
+                      <label className="label">
+                        <span className="label-text">New Password</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
+                        <input
+                          type="password"
+                          name="newPassword"
+                          placeholder="Enter new password (min 6 characters)"
+                          className="input input-bordered w-full pl-10 bg-base-100"
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordChange}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="label">
-                      <span className="label-text">Confirm New Password</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        placeholder="Confirm new password"
-                        className="input input-bordered w-full pl-10 bg-base-100"
-                        value={passwordData.confirmPassword}
-                        onChange={handlePasswordChange}
-                        required
-                      />
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Confirm New Password</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" size={20} />
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          placeholder="Confirm new password"
+                          className="input input-bordered w-full pl-10 bg-base-100"
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordChange}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="card-actions">
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                      {loading ? (
-                        <span className="loading loading-spinner"></span>
-                      ) : (
-                        <>
-                          <Lock size={20} />
-                          Change Password
-                        </>
-                      )}
-                    </button>
+                    <div className="card-actions">
+                      <button type="submit" className="btn btn-primary" disabled={loading}>
+                        {loading ? (
+                          <span className="loading loading-spinner"></span>
+                        ) : (
+                          <>
+                            <Lock size={20} />
+                            Change Password
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="bg-base-300 p-8 rounded-xl text-center">
+                    <div className="w-16 h-16 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Mail size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">Social Account</h3>
+                    <p className="text-base-content/70 max-w-md mx-auto">
+                      Your account is linked with {auth.currentUser?.providerData[0]?.providerId === 'google.com' ? 'Google' : 'a social provider'}. 
+                      Passwords for these accounts are managed through the provider's settings.
+                    </p>
                   </div>
-                </form>
+                )}
               </div>
             </div>
           )}
