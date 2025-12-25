@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-// Base URL from env or fallback to local dev server
+// Set the API URL based on the environment
+const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://etuitionbd-by-milon.vercel.app';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://etuitionbd-by-milon.vercel.app/',
+  baseURL,
 });
 
 // Attach JWT token from localStorage if available
