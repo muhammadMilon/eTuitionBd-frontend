@@ -13,6 +13,7 @@ import {
     MapPin,
     Phone,
     Send,
+    Star,
     User,
     Users,
     XCircle,
@@ -679,12 +680,90 @@ const TuitionDetails = () => {
                 </div>
               </div>
             )}
+
+            {/* Verification & Trust Badge */}
+            <div className="card bg-base-200 border-l-4 border-success shadow-xl">
+              <div className="card-body p-6">
+                 <div className="flex gap-4">
+                   <div className="bg-success/10 p-3 rounded-full h-fit text-success">
+                     <CheckCircle size={24} />
+                   </div>
+                   <div>
+                     <h3 className="font-bold text-lg">Verified Post</h3>
+                     <p className="text-sm opacity-70 mt-1">
+                       This tuition post has been verified by our team. You can safely apply and communicate.
+                     </p>
+                   </div>
+                 </div>
+              </div>
+            </div>
+
+            {/* Related Tuitions (Mock) */}
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title mb-4 text-sm tracking-widest uppercase opacity-50">Related Tuitions</h2>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((_, i) => (
+                    <div key={i} className="flex gap-4 items-center group cursor-pointer hover:bg-base-300 p-2 rounded-lg transition-colors">
+                      <div className="w-16 h-16 rounded-lg bg-base-100 flex items-center justify-center text-primary font-bold">
+                        Math
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold truncate group-hover:text-primary transition-colors">Class 8 Math Tutor</h4>
+                        <p className="text-xs opacity-60">Dhaka, Dhanmondi</p>
+                        <p className="text-xs font-bold text-primary mt-1">৳5,000/mo</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section - Bottom full width */}
+        <div className="mt-12">
+          <div className="card bg-base-200 shadow-xl">
+            <div className="card-body">
+              <h2 className="text-2xl font-bold mb-6">Reviews & Rating</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {/* Rating Summary */}
+                 <div className="text-center md:text-left">
+                   <div className="text-5xl font-black text-primary">4.8</div>
+                   <div className="flex gap-1 justify-center md:justify-start text-warning my-2">
+                     {[...Array(5)].map((_, i) => <Star key={i} size={20} className="fill-current" />)}
+                   </div>
+                   <p className="text-sm opacity-60">Based on 12 reviews</p>
+                 </div>
+
+                 {/* Reviews List */}
+                 <div className="md:col-span-2 space-y-6">
+                   {[
+                     { user: 'Rahim A.', rating: 5, text: 'Great student, very cooperative family.', date: '2 days ago' },
+                     { user: 'Karim U.', rating: 4, text: 'Good environment for teaching.', date: '1 week ago' }
+                   ].map((review, idx) => (
+                     <div key={idx} className="border-b border-base-content/10 pb-6 last:border-0 last:pb-0">
+                       <div className="flex justify-between items-start mb-2">
+                         <div className="font-bold">{review.user}</div>
+                         <span className="text-xs opacity-50">{review.date}</span>
+                       </div>
+                       <div className="flex gap-1 text-warning text-xs mb-2">
+                         {[...Array(review.rating)].map((_, i) => <span key={i}>★</span>)}
+                       </div>
+                       <p className="text-sm opacity-80">"{review.text}"</p>
+                     </div>
+                   ))}
+                 </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default TuitionDetails;
 

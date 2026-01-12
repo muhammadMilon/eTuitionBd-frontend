@@ -10,9 +10,12 @@ import { AuthProvider } from './context/AuthContext';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Home from './pages/Home';
-import Login from './pages/Login';
+import Login from './pages/Login'; // Keep Login as it's used in the public routes
 import NotFound from './pages/NotFound';
+import Privacy from './pages/Privacy';
+import ProfileSettings from './pages/ProfileSettings'; // This import seems misplaced for public pages, but following instruction
 import Register from './pages/Register';
+import Terms from './pages/Terms';
 import TuitionDetails from './pages/TuitionDetails';
 import Tuitions from './pages/Tuitions';
 import TutorProfile from './pages/TutorProfile';
@@ -21,7 +24,8 @@ import Tutors from './pages/Tutors';
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
 import PaymentHistory from './pages/PaymentHistory';
-import ProfileSettings from './pages/ProfileSettings';
+// ProfileSettings is already imported above, but it's also a dashboard page.
+// import ProfileSettings from './pages/ProfileSettings'; // Removed duplicate import
 
 // Student Dashboard Pages
 import AllTutors from './pages/dashboards/AllTutors';
@@ -77,13 +81,16 @@ function App() {
             {/* Public Routes with Main Layout */}
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
+              <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="terms" element={<Terms />} />
               <Route path="tuitions" element={<Tuitions />} />
               <Route path="tuitions/:id" element={<TuitionDetails />} />
               <Route path="tutors" element={<Tutors />} />
               <Route path="tutors/:id" element={<TutorProfile />} />
               <Route path="about" element={<About />} />
               <Route path="contact" element={<Contact />} />
-              <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
             </Route>
 

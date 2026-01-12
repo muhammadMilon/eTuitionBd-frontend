@@ -1,4 +1,6 @@
-import { Target, Eye, Users, Award } from 'lucide-react';
+import { Award, Eye, Target, Users } from 'lucide-react';
+
+import TeamSection from '../components/TeamSection';
 
 const About = () => {
   return (
@@ -124,6 +126,9 @@ const About = () => {
           </div>
         </section>
       </div>
+
+      {/* Team Section */}
+      <TeamSection />
     </div>
   );
 };

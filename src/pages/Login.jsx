@@ -72,6 +72,38 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setFormData({ email: 'admin@example.com', password: 'password123' }); // Setting for visual feedback
+    try {
+      // Simulate slight delay for effect
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const { data } = await api.post('/api/auth/login', {
+        email: 'admin@example.com', 
+        password: 'password123',
+      });
+      
+      toast.success('Demo Admin Login Successful!');
+      if (data?.token) {
+        localStorage.setItem('etuitionbd_token', data.token);
+      }
+      if (data?.user?.role) {
+        localStorage.setItem(`userRole_${data.user.uid}`, data.user.role);
+      }
+      if (data?.user) {
+         setAuthUser(data.user);
+      }
+      
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Demo login failed:', error);
+      toast.error('Demo Login failed (ensure admin account exists)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
@@ -143,6 +175,19 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-4">
+            <button 
+              onClick={handleDemoLogin}
+              className="btn btn-neutral w-full group"
+              disabled={loading}
+            >
+              <div className="flex items-center gap-2">
+                 <Lock size={16} className="group-hover:text-primary transition-colors" />
+                 <span>Demo Admin Login</span>
+              </div>
+            </button>
+          </div>
 
           <div className="divider">OR</div>
 

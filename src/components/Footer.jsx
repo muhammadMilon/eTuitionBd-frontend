@@ -8,10 +8,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About Section */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <Link to="/" onClick={() => window.scrollTo(0, 0)} className="flex items-center gap-2 mb-4 inline-flex">
               <img src="/logo.jpg" alt="eTuitionBd Logo" className="h-12 w-12 rounded-full object-cover" />
               <h3 className="text-xl font-bold text-primary">eTuitionBd</h3>
-            </div>
+            </Link>
             <p className="text-base-content/70 text-sm leading-relaxed">
               Your trusted platform for connecting students with qualified tutors.
               We simplify the process of finding and managing tuition, making

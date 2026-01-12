@@ -1,13 +1,15 @@
-import { Bell, BookOpen, Calendar, Heart, Home, Info, LayoutDashboard, LogOut, Mail, Menu, MessageSquare, User, Users, X } from 'lucide-react';
+import { Bell, BookOpen, Calendar, Heart, Home, Info, LayoutDashboard, LogOut, Mail, Menu, MessageSquare, Moon, Sun, User, Users, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { currentUser, logout, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -75,7 +77,11 @@ const Navbar = () => {
     <nav className="navbar bg-base-200 shadow-lg sticky top-0 z-50 border-b border-base-300">
       <div className="container mx-auto px-4">
         <div className="flex-1">
-          <Link to="/" className="btn btn-ghost normal-case text-xl font-bold text-primary">
+          <Link 
+            to="/" 
+            className="btn btn-ghost normal-case text-xl font-bold text-primary"
+            onClick={() => window.scrollTo(0, 0)}
+          >
             <img src="/logo.jpg" alt="eTuitionBd Logo" className="h-12 w-12 rounded-full object-cover mr-2" />
             eTuitionBd
           </Link>
@@ -96,6 +102,13 @@ const Navbar = () => {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Theme Toggle - Desktop */}
+        <div className="hidden lg:flex items-center ml-2">
+          <button className="btn btn-ghost btn-circle" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
         </div>
 
         {/* Auth Navigation - Desktop */}
@@ -216,7 +229,10 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex-none lg:hidden">
+        <div className="flex-none lg:hidden flex items-center gap-2">
+           <button className="btn btn-ghost btn-circle" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <button
             className="btn btn-square btn-ghost"
             onClick={() => setIsOpen(!isOpen)}

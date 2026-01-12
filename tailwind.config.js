@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
@@ -41,6 +42,30 @@ export default {
           "base-200": "#1e293b",
           "base-300": "#334155",
           "base-content": "#f1f5f9",
+          "info": "#3b82f6",
+          "success": "#10b981",
+          "warning": "#f59e0b",
+          "error": "#ef4444",
+        },
+      },
+      {
+        light: {
+          "primary": "#3b82f6",
+          "primary-focus": "#2563eb",
+          "primary-content": "#ffffff",
+          "secondary": "#8b5cf6",
+          "secondary-focus": "#7c3aed",
+          "secondary-content": "#ffffff",
+          "accent": "#10b981",
+          "accent-focus": "#059669",
+          "accent-content": "#ffffff",
+          "neutral": "#f1f5f9",
+          "neutral-focus": "#e2e8f0",
+          "neutral-content": "#1e293b",
+          "base-100": "#ffffff",
+          "base-200": "#f8fafc",
+          "base-300": "#f1f5f9",
+          "base-content": "#0f172a",
           "info": "#3b82f6",
           "success": "#10b981",
           "warning": "#f59e0b",

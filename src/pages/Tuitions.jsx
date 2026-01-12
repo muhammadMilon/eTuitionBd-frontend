@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, ChevronRight, Clock, Eye, Heart, MapPin, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Clock, GraduationCap, Heart, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -242,63 +242,62 @@ const Tuitions = () => {
         ) : (
           <>
             {tuitions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {tuitions.map((tuition) => (
-                  <div key={tuition._id} className="card bg-base-200 border border-base-300 hover:border-primary transition-all duration-500 group shadow-lg hover:shadow-2xl rounded-3xl overflow-hidden translate-y-0 hover:-translate-y-2">
-                    <div className="card-body p-8">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="badge badge-primary bg-primary/10 border-primary/20 text-primary px-4 py-4 font-bold rounded-xl">{tuition.subject}</div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 text-xs opacity-40 font-medium">
-                            <Clock size={14} />
-                            {getTimeAgo(tuition.createdAt)}
-                          </div>
-                          {currentUser && (
+                  <div key={tuition._id} className="card bg-base-200 border border-base-300 hover:border-primary transition-all duration-500 group shadow-lg hover:shadow-2xl rounded-3xl overflow-hidden translate-y-0 hover:-translate-y-2 flex flex-col h-full">
+                    <figure className="h-48 relative overflow-hidden">
+                      <img 
+                        src={`https://source.unsplash.com/random/800x600/?education,${tuition.subject}`} 
+                        alt={tuition.subject}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1000';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                        <div className="badge badge-primary border-none text-white font-bold backdrop-blur-md bg-primary/80">{tuition.subject}</div>
+                         {currentUser && (
                             <button 
                               onClick={(e) => handleToggleBookmark(e, tuition._id)}
-                              className="btn btn-ghost btn-circle btn-xs hover:bg-transparent"
+                              className="btn btn-circle btn-xs bg-base-100/20 border-none hover:bg-white text-white hover:text-error backdrop-blur-md"
                             >
                               <Heart 
-                                size={18} 
-                                className={`${bookmarkedIds.includes(tuition._id) ? 'fill-error text-error' : 'text-base-content/30'} transition-colors`} 
+                                size={14} 
+                                className={`${bookmarkedIds.includes(tuition._id) ? 'fill-error text-error' : ''} transition-colors`} 
                               />
                             </button>
                           )}
-                        </div>
+                      </div>
+                    </figure>
+                    <div className="card-body p-6 flex-1 flex flex-col">
+                      <div className="flex items-center gap-1.5 text-xs opacity-50 font-medium mb-2">
+                        <Clock size={12} />
+                        {getTimeAgo(tuition.createdAt)}
                       </div>
                       
-                      <h2 className="card-title text-2xl font-bold mb-4 group-hover:text-primary transition-colors leading-tight min-h-[64px] line-clamp-2">
-                        {tuition.title || `${tuition.subject} Tutor needed for Class ${tuition.class}`}
+                      <h2 className="card-title text-lg font-bold mb-3 group-hover:text-primary transition-colors leading-tight line-clamp-2 min-h-[3rem]">
+                        {tuition.title || `${tuition.subject} for Class ${tuition.class}`}
                       </h2>
 
-                      <div className="space-y-4 mb-8">
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="w-10 h-10 rounded-2xl bg-base-100 text-primary flex items-center justify-center shadow-sm">
-                            <BookOpen size={18} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Grade</p>
-                            <span className="font-bold">{tuition.class}</span>
-                          </div>
+                      <div className="space-y-3 mb-6 flex-1">
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="text-primary opacity-70"><GraduationCap size={16} /></div>
+                          <span className="font-medium opacity-80">Class: {tuition.class}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="w-10 h-10 rounded-2xl bg-base-100 text-primary flex items-center justify-center shadow-sm">
-                            <MapPin size={18} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Location</p>
-                            <span className="font-bold truncate max-w-[180px] block">{tuition.location}</span>
-                          </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="text-primary opacity-70"><MapPin size={16} /></div>
+                          <span className="font-medium opacity-80 truncate">{tuition.location}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-end justify-between pt-6 border-t border-base-300/50">
+                      <div className="flex items-center justify-between pt-4 border-t border-base-content/10 mt-auto">
                         <div>
-                          <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Monthly Budget</p>
-                          <span className="text-2xl font-black text-primary">৳{tuition.budget}</span>
+                          <p className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">Budget</p>
+                          <span className="text-xl font-black text-primary">৳{tuition.budget}</span>
                         </div>
-                        <Link to={`/tuitions/${tuition._id}`} className="btn btn-circle btn-primary shadow-lg shadow-primary/20 group-hover:scale-110 active:scale-90 transition-all">
-                          <Eye size={20} />
+                        <Link to={`/tuitions/${tuition._id}`} className="btn btn-circle btn-sm btn-primary shadow-lg shadow-primary/20 group-hover:scale-110 transition-all">
+                          <ArrowRight size={16} />
                         </Link>
                       </div>
                     </div>

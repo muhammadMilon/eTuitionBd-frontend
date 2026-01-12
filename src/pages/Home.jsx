@@ -1,10 +1,13 @@
+
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, CheckCircle, Clock, DollarSign, GraduationCap, MapPin, Shield, User, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle, DollarSign, GraduationCap, MapPin, Shield, Star, User, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import api from '../api/axiosInstance';
+import SectionHeader from '../components/SectionHeader';
+import TeamSection from '../components/TeamSection';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -36,29 +39,7 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const SectionHeader = ({ title, subtitle }) => (
-    <div className="text-center mb-12">
-      <motion.h2 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-4xl font-bold mb-4"
-      >
-        {title}
-      </motion.h2>
-      {subtitle && (
-        <motion.p 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="text-lg text-base-content/70 max-w-2xl mx-auto"
-        >
-          {subtitle}
-        </motion.p>
-      )}
-    </div>
-  );
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -78,6 +59,39 @@ const Home = () => {
       transition: { duration: 0.5 }
     }
   };
+
+  const renderingContent = latestTuitions.length > 0 ? (
+    latestTuitions.map((job) => (
+      <motion.div key={job._id} variants={itemVariants} className="card bg-base-200 hover:shadow-xl transition-all duration-300 border border-base-300 hover:border-primary/50 group">
+        <div className="card-body">
+          <div className="flex justify-between items-start mb-2">
+            <div className="badge badge-primary badge-outline">{job.subject}</div>
+            <span className="font-mono text-xs opacity-50">{new Date(job.createdAt).toLocaleDateString()}</span>
+          </div>
+          <h3 className="card-title group-hover:text-primary transition-colors">{job.title}</h3>
+          <div className="space-y-2 mt-4 text-sm opacity-80">
+             <div className="flex items-center gap-2">
+               <GraduationCap size={16} className="text-primary" />
+               <span>Class: {job.class}</span>
+             </div>
+             <div className="flex items-center gap-2">
+               <MapPin size={16} className="text-primary" />
+               <span className="truncate">{job.location}</span>
+             </div>
+             <div className="flex items-center gap-2">
+               <DollarSign size={16} className="text-primary" />
+               <span>{job.budget} BDT/month</span>
+             </div>
+          </div>
+          <div className="card-actions justify-end mt-4">
+            <Link to={'/tuition/' + job._id} className="btn btn-sm btn-ghost group-hover:btn-primary">View Details</Link>
+          </div>
+        </div>
+      </motion.div>
+    ))
+  ) : (
+    <div className="col-span-full text-center py-10 opacity-50">No tuitions found.</div>
+  );
 
   const heroSlides = [
     {
@@ -144,22 +158,22 @@ const Home = () => {
         >
           {heroSlides.map((slide, index) => (
             <SwiperSlide key={index}>
-              <div className="min-h-[80vh] sm:min-h-[85vh] lg:min-h-[75vh] xl:min-h-[85vh] 2xl:min-h-[80vh] w-full flex items-center">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-20 lg:py-16 xl:py-24 2xl:py-32">
-                  <div className="flex flex-col lg:flex-row items-center gap-10 sm:gap-12 lg:gap-16 xl:gap-24">
+              <div className="min-h-[60vh] lg:min-h-[85vh] w-full flex items-center">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-12 xl:py-20 2xl:py-24">
+                  <div className="flex flex-col lg:flex-row items-center gap-8 sm:gap-10 lg:gap-16 xl:gap-24">
                     {/* Content Section */}
                     <div className="w-full lg:w-1/2 order-2 lg:order-1 text-center lg:text-left">
                       <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="space-y-5 sm:space-y-6 md:space-y-8"
+                        className="space-y-4 sm:space-y-5 md:space-y-6"
                       >
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">
+                        <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase">
                           Premium Tutor Network
                         </span>
                         
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black leading-[1.1] text-base-content tracking-tight">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-black leading-[1.1] text-base-content tracking-tight">
                           {slide.title.split(' ').map((word, i) => (
                             <span key={i} className={i >= slide.title.split(' ').length - 2 ? "text-primary" : ""}>
                               {word}{' '}
@@ -167,41 +181,41 @@ const Home = () => {
                           ))}
                         </h1>
                         
-                        <p className="text-base sm:text-lg md:text-xl text-base-content/70 max-w-xl lg:max-w-md xl:max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                        <p className="text-sm sm:text-sm md:text-base text-base-content/70 max-w-xl lg:max-w-md xl:max-w-xl mx-auto lg:mx-0 leading-relaxed">
                           {slide.description}
                         </p>
                         
                         <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-4 pt-2 sm:pt-4">
-                          <Link to={slide.ctaLink} className="btn btn-primary btn-md md:btn-lg px-6 sm:px-8 xl:px-10 rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 transition-all">
-                            {slide.ctaText} <ArrowRight className="ml-2" size={20} />
+                          <Link to={slide.ctaLink} className="btn btn-primary btn-sm md:btn-md px-5 sm:px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all text-xs sm:text-sm">
+                            {slide.ctaText} <ArrowRight className="ml-1.5" size={16} />
                           </Link>
-                          <a href={slide.secondaryLink} className="btn btn-ghost btn-md md:btn-lg px-6 sm:px-8 xl:px-10 rounded-2xl border-2 border-base-content/10 hover:bg-base-content/5">
+                          <a href={slide.secondaryLink} className="btn btn-ghost btn-sm md:btn-md px-5 sm:px-6 rounded-xl border border-base-content/10 hover:bg-base-content/5 text-xs sm:text-sm">
                             {slide.secondaryText}
                           </a>
                         </div>
 
                         {/* Stats Info */}
-                        <div className="flex items-center justify-center lg:justify-start gap-6 sm:gap-10 pt-8 sm:pt-10 border-t border-base-content/10 w-fit mx-auto lg:mx-0">
-                          <div className="space-y-0.5 sm:space-y-1">
-                            <div className="text-2xl sm:text-3xl font-black text-primary">500+</div>
-                            <div className="text-[9px] sm:text-[10px] font-bold opacity-50 uppercase tracking-widest">Expert Tutors</div>
+                        <div className="flex items-center justify-center lg:justify-start gap-5 sm:gap-8 pt-6 sm:pt-8 border-t border-base-content/10 w-fit mx-auto lg:mx-0">
+                          <div className="space-y-0.5">
+                            <div className="text-xl sm:text-2xl font-black text-primary">500+</div>
+                            <div className="text-[8px] sm:text-[9px] font-bold opacity-50 uppercase tracking-widest">Expert Tutors</div>
                           </div>
-                          <div className="w-px h-8 sm:h-10 bg-base-content/10"></div>
-                          <div className="space-y-0.5 sm:space-y-1">
-                            <div className="text-2xl sm:text-3xl font-black text-primary">1200+</div>
-                            <div className="text-[9px] sm:text-[10px] font-bold opacity-50 uppercase tracking-widest">Happy Students</div>
+                          <div className="w-px h-6 sm:h-8 bg-base-content/10"></div>
+                          <div className="space-y-0.5">
+                            <div className="text-xl sm:text-2xl font-black text-primary">1200+</div>
+                            <div className="text-[8px] sm:text-[9px] font-bold opacity-50 uppercase tracking-widest">Happy Students</div>
                           </div>
                         </div>
                       </motion.div>
                     </div>
 
-                    {/* Image Section */}
-                    <div className="w-full sm:w-4/5 md:w-2/3 lg:w-1/2 order-1 lg:order-2">
+                    {/* Image Section - Reduced size */}
+                    <div className="w-full sm:w-3/4 md:w-3/5 lg:w-2/5 order-1 lg:order-2">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9, x: 50 }}
                         animate={{ opacity: 1, scale: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="relative mx-auto lg:ml-auto max-w-[300px] sm:max-w-[400px] md:max-w-[450px] lg:max-w-none"
+                        className="relative mx-auto lg:ml-auto max-w-[250px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px]"
                       >
                         {/* Blob Background */}
                         <div className="absolute -inset-4 sm:-inset-6 bg-primary/20 blur-2xl sm:blur-3xl rounded-full opacity-50 animate-pulse"></div>
@@ -219,25 +233,25 @@ const Home = () => {
                         <motion.div
                           animate={{ y: [0, -12, 0] }}
                           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute -top-4 sm:-top-6 -right-4 sm:-right-6 bg-base-100/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/10 hidden sm:block"
+                          className="absolute -top-4 sm:-top-6 -right-4 sm:-right-6 bg-base-100/90 backdrop-blur-xl p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-xl border border-white/10 hidden sm:block"
                         >
                           <div className="text-center">
-                            <div className="bg-success/20 p-1.5 sm:p-2 rounded-xl mb-1 sm:mb-2 inline-block">
-                              <CheckCircle className="text-success" size={20} />
+                            <div className="bg-success/20 p-1 sm:p-1.5 rounded-lg mb-1 inline-block">
+                              <CheckCircle className="text-success" size={16} />
                             </div>
-                            <div className="text-[9px] sm:text-xs font-black tracking-tighter">VERIFIED<br/>TUTORS</div>
+                            <div className="text-[8px] sm:text-[10px] font-black tracking-tighter">VERIFIED<br/>TUTORS</div>
                           </div>
                         </motion.div>
 
                         <motion.div
                           animate={{ y: [0, 12, 0] }}
                           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                          className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-primary p-3 sm:p-4 px-4 sm:px-6 rounded-2xl sm:rounded-3xl shadow-2xl text-white hidden sm:flex items-center gap-2 sm:gap-3"
+                          className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-primary p-2.5 sm:p-3 px-3 sm:px-5 rounded-xl sm:rounded-2xl shadow-xl text-white hidden sm:flex items-center gap-2"
                         >
-                          <div className="bg-white/20 p-1 sm:p-1.5 rounded-lg">
-                            <Shield size={16} />
+                          <div className="bg-white/20 p-1 rounded-md">
+                            <Shield size={14} />
                           </div>
-                          <div className="text-left font-black tracking-tight leading-none text-[10px] sm:text-sm uppercase">
+                          <div className="text-left font-black tracking-tight leading-none text-[9px] sm:text-xs uppercase">
                             Secure<br/>Platform
                           </div>
                         </motion.div>
@@ -261,26 +275,7 @@ const Home = () => {
           </div>
         </Swiper>
 
-        <style dangerouslySetInnerHTML={{ __html: `
-          .custom-pagination .swiper-pagination-bullet {
-            width: 12px;
-            height: 6px;
-            border-radius: 4px;
-            background: currentColor;
-            opacity: 0.2;
-            transition: all 0.3s ease;
-            margin: 0 !important;
-          }
-          .custom-pagination .swiper-pagination-bullet-active {
-            width: 30px;
-            opacity: 1;
-            background: var(--p) !important;
-          }
-          .hero-swiper .swiper-button-disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-          }
-        `}} />
+
       </section>
 
       {/* Latest Tuitions Section - Dynamic */}
@@ -301,40 +296,9 @@ const Home = () => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {latestTuitions.length > 0 ? (
-                latestTuitions.map((job) => (
-                  <motion.div key={job._id} variants={itemVariants} className="card bg-base-200 hover:shadow-xl transition-all duration-300 border border-base-300 hover:border-primary/50 group">
-                    <div className="card-body">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="badge badge-primary badge-outline">{job.subject}</div>
-                        <span className="text-xs font-mono opacity-50">{new Date(job.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <h3 className="card-title group-hover:text-primary transition-colors">{job.title}</h3>
-                      <div className="space-y-2 mt-4 text-sm opacity-80">
-                         <div className="flex items-center gap-2">
-                           <GraduationCap size={16} className="text-primary" />
-                           <span>Class: {job.class}</span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <MapPin size={16} className="text-primary" />
-                           <span className="truncate">{job.location}</span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <DollarSign size={16} className="text-primary" />
-                           <span>{job.budget} BDT/month</span>
-                         </div>
-                      </div>
-                      <div className="card-actions justify-end mt-4">
-                        <Link to={`/tuition/${job._id}`} className="btn btn-sm btn-ghost group-hover:btn-primary">View Details</Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-10 opacity-50">No tuitions found.</div>
-              )}
+            {renderingContent}
             </motion.div>
           )}
           
@@ -383,7 +347,7 @@ const Home = () => {
                          <span key={i} className="badge badge-xs badge-neutral">{sub}</span>
                        ))}
                      </div>
-                     <Link to={`/tutors/${tutor._id}`} className="btn btn-primary btn-sm btn-block mt-4">View Profile</Link>
+                     <Link to={'/tutors/' + tutor._id} className="btn btn-primary btn-sm btn-block mt-4">View Profile</Link>
                    </div>
                  </motion.div>
                ))
@@ -395,7 +359,7 @@ const Home = () => {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 px-4 bg-slate-950 text-white relative overflow-hidden scroll-mt-20">
+      <section id="how-it-works" className="py-24 px-4 bg-base-200 text-base-content dark:bg-slate-950 dark:text-white relative overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="container mx-auto relative z-10">
           <motion.div 
@@ -453,35 +417,141 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section id="why-choose-us" className="py-24 px-4 bg-base-100 scroll-mt-20">
+      {/* Statistics Section - NEW: Section 7 */}
+      <section className="py-20 px-4 bg-primary text-primary-content">
         <div className="container mx-auto">
-          <SectionHeader title="Why Choose eTuitionBd?" />
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+             {[
+               { label: 'Active Tutors', value: '2,500+' },
+               { label: 'Satisfied Students', value: '15,000+' },
+               { label: 'Subjects Covered', value: '45+' },
+               { label: 'Districts Reached', value: '64' }
+             ].map((stat, idx) => (
+               <motion.div 
+                 key={idx}
+                 initial={{ opacity: 0, scale: 0.5 }}
+                 whileInView={{ opacity: 1, scale: 1 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: idx * 0.1 }}
+               >
+                 <div className="text-4xl md:text-5xl font-black mb-2">{stat.value}</div>
+                 <div className="text-sm md:text-base opacity-80 uppercase tracking-widest font-bold">{stat.label}</div>
+               </motion.div>
+             ))}
+           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section - NEW: Section 8 */}
+      <section className="py-24 px-4 bg-base-200">
+        <div className="container mx-auto">
+          <SectionHeader 
+            title="What People Say" 
+            subtitle="Don't just take our word for it. Here's what our community has to say."
+          />
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={30}
+            slidesPerView={1}
+            breakpoints={{
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
+            className="pb-16"
           >
             {[
-              { title: 'Verified Tutors', icon: Shield, desc: 'Every tutor undergoes a strict verification process for safety.' },
-              { title: 'Easy Management', icon: Clock, desc: 'Track classes, attendance, and payments in one dashboard.' },
-              { title: 'Transparent Pricing', icon: DollarSign, desc: 'Zero hidden fees. Negotiate directly with tutors.' },
-              { title: 'Location Based', icon: MapPin, desc: 'Find tutors in your local area or opt for online sessions.' },
-              { title: 'All Subjects', icon: GraduationCap, desc: 'From KG to University level, we cover all academic subjects.' },
-              { title: 'Community', icon: Users, desc: 'Join a growing community of learners and educators.' },
-            ].map((feature, idx) => (
-              <motion.div key={idx} variants={itemVariants} className="card bg-base-200 hover:bg-base-300 transition-colors border-l-4 border-transparent hover:border-primary">
-                <div className="card-body">
-                  <feature.icon className="text-primary mb-4" size={40} />
-                  <h3 className="card-title">{feature.title}</h3>
-                  <p className="text-base-content/70">{feature.desc}</p>
-                </div>
-              </motion.div>
+              { 
+                name: 'Sarah Ahmed', 
+                role: 'Guardian', 
+                text: 'Found an amazing math tutor for my son within 2 days. The verification process gives me peace of mind.',
+                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150'
+              },
+              { 
+                name: 'Rahim Uddin', 
+                role: 'University Student', 
+                text: 'eTuitionBd helped me find tuition jobs near my campus. It covers my semester fees easily!',
+                image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150'
+              },
+              { 
+                name: 'Nazia Hassan', 
+                role: 'A-Level Student', 
+                text: 'The physics tutor I found here is excellent. My grades have improved significantly.',
+                image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150'
+              },
+              { 
+                name: 'Dr. Kamal Hossain', 
+                role: 'Professor', 
+                text: 'A well-organized platform for educators to connect with eager learners. Highly recommended.',
+                image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150'
+              }
+            ].map((review, idx) => (
+               <SwiperSlide key={idx}>
+                 <div className="card bg-base-100 shadow-xl border border-base-content/5 h-full">
+                   <div className="card-body">
+                     <div className="flex gap-1 text-warning mb-4">
+                       {[...Array(5)].map((_, i) => <Star key={i} size={16} className="fill-current" />)} 
+                     </div>
+                     <p className="mb-6 italic opacity-80">"{review.text}"</p>
+                     <div className="flex items-center gap-4 mt-auto">
+                       <div className="avatar">
+                         <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                           <img src={review.image} alt={review.name} />
+                         </div>
+                       </div>
+                       <div>
+                         <h4 className="font-bold">{review.name}</h4>
+                         <span className="text-xs opacity-60 uppercase tracking-wider">{review.role}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </SwiperSlide>
             ))}
-          </motion.div>
+          </Swiper>
         </div>
+      </section>
+
+      {/* Team Section - NEW: Section 9 */}
+      <TeamSection />
+
+      {/* FAQ Section - NEW: Section 9 */}
+      <section className="py-24 px-4 bg-base-100">
+        <div className="container mx-auto max-w-4xl">
+          <SectionHeader title="Frequently Asked Questions" />
+          <div className="join join-vertical w-full">
+            {[
+              { q: 'Is it free to create a student profile?', a: 'Yes, creating a student profile and posting tuition requirements is completely free.' },
+              { q: 'How do you verify tutors?', a: 'We verify national ID, educational certificates, and conduct phone interviews for premium tutors.' },
+              { q: 'Can I teach multiple subjects?', a: 'Absolutely! You can list all the subjects you are qualified to teach in your profile.' },
+              { q: 'How are payments handled?', a: 'We facilitate the connection. Payments are typically handled directly between guardians and tutors, but we offer a secure payment gateway for premium services.' }
+            ].map((faq, idx) => (
+              <div key={idx} className="collapse collapse-arrow join-item border border-base-300">
+                <input type="radio" name="my-accordion-4" defaultChecked={idx === 0} /> 
+                <div className="collapse-title text-xl font-medium">
+                  {faq.q}
+                </div>
+                <div className="collapse-content">
+                  <p className="opacity-70">{faq.a}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section - NEW: Section 10 */}
+      <section className="py-24 px-4 bg-base-300 text-base-content relative overflow-hidden">
+         <div className="absolute top-0 right-0 p-20 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+         <div className="container mx-auto text-center relative z-10">
+           <SectionHeader title="Stay Updated" subtitle="Subscribe to our newsletter for the latest tuition jobs and educational tips." />
+           <div className="max-w-xl mx-auto flex flex-col sm:flex-row gap-4">
+             <input type="email" placeholder="Enter your email address" className="input input-lg input-bordered w-full rounded-full focus:outline-none focus:border-primary" />
+             <button className="btn btn-primary btn-lg rounded-full px-8">Subscribe</button>
+           </div>
+           <p className="text-sm opacity-50 mt-4">We respect your privacy. Unsubscribe at any time.</p>
+         </div>
       </section>
 
       {/* CTA Section */}

@@ -14,9 +14,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f172a;
-  color: #f1f5f9;
-  min-height: 100vh;
+  @apply bg-base-100 text-base-content min-h-screen;
 }
 
 html {
@@ -42,13 +40,34 @@ html {
 }
 
 /* Ensure all components use dark theme */
+/* Ensure all components use dark theme */
 input, textarea, select {
-  background-color: #1e293b;
-  color: #f1f5f9;
-  border-color: #334155;
+  @apply bg-base-200 text-base-content border-base-300;
 }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: #3b82f6;
+  @apply border-primary;
+}
+
+/* Custom Swiper Pagination Styles */
+.custom-pagination .swiper-pagination-bullet {
+  width: 12px;
+  height: 6px;
+  border-radius: 4px;
+  background: currentColor;
+  opacity: 0.2;
+  transition: all 0.3s ease;
+  margin: 0 !important;
+}
+
+.custom-pagination .swiper-pagination-bullet-active {
+  width: 30px;
+  opacity: 1;
+  background: var(--p) !important;
+}
+
+.hero-swiper .swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
